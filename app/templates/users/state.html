@@ -1,0 +1,3 @@
+{% extends 'users/base.html' %}
+{% from 'users/macros.html' import field %}
+{% block admin_content %}<section class="admin-panel"><h2>{{ 'Desactivar' if target.activo else 'Activar' }} {{ target.username }}</h2><p>{{ 'Se impedirá el acceso y las sesiones existentes dejarán de ser válidas.' if target.activo else 'La cuenta podrá iniciar sesión y conservará su rol asignado.' }}</p><form method="post" class="administrative-form">{{ form.hidden_tag() }}{{ field(form.confirmacion) }}<div class="form-actions"><button class="btn btn-primary" type="submit">CONFIRMAR CAMBIO</button><a class="btn admin-secondary" href="{{ url_for('users.index') }}">CANCELAR</a></div></form></section>{% endblock %}

@@ -1,0 +1,4 @@
+{% extends 'administration/base.html' %}
+{% from 'hospital_services/macros.html' import record_table %}
+{% block extra_head %}{{ super() }}<script src="{{ url_for('static', filename='js/print_record.js') }}" defer></script>{% endblock %}
+{% block admin_content %}<section class="admin-panel printable-record"><h2>DEPARTAMENTO DE ENFERMERÍA</h2><p>HOSPITAL REGIONAL CDE</p><h3>{{ category.label }} #{{ record.id }}</h3><p>Servicio: {{ record.servicio.nombre }}</p>{{ record_table(category, [record], matching_details) }}<p>Carga: {{ record.usuario_registro.username }} · {{ record.fecha_creacion|fecha_local }}</p><div class="form-actions print-tools"><button class="btn btn-primary" type="button" id="print-record">IMPRIMIR DOCUMENTO</button><a class="btn admin-secondary" href="{{ url_for(category.edit_endpoint, record_id=record.id) }}">VOLVER AL REGISTRO</a></div></section>{% endblock %}

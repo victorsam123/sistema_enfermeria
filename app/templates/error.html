@@ -1,0 +1,2 @@
+{% extends 'base.html' %}
+{% block body %}<main class="error-page"><span class="medical-mark"><i class="bi bi-shield-exclamation" aria-hidden="true"></i></span><h1>{{ title }}</h1><p>{{ message }}</p><a class="btn btn-primary" href="{{ url_for('main.dashboard') }}">Volver al inicio</a></main>{% endblock %}

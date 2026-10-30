@@ -1,0 +1,36 @@
+{% extends 'administration/leave_base.html' %}
+{% from 'administration/macros.html' import field, pagination %}
+{% from 'administration/leave_macros.html' import filters_form, owner %}
+{% block leave_scripts %}<script src="{{ url_for('static', filename='js/vacaciones.js') }}" defer></script>{% endblock %}
+{% block subtitle %}Registro de períodos de vacaciones y días calendario.{% endblock %}
+{% from 'documents/macros.html' import documents_link %}
+{% from 'employees/lookup.html' import employee_lookup %}
+{% block admin_content %}
+<section class="admin-panel" aria-labelledby="form-heading">
+  <div class="panel-title"><span class="stat-icon blue"><i class="bi bi-calendar2-week" aria-hidden="true"></i></span><div><h2 id="form-heading">{{ 'Editar vacaciones #' ~ record.id if record else 'Nuevo registro de vacaciones' }}</h2><p>Los campos con * son obligatorios.</p></div></div>
+  <form method="post" enctype="multipart/form-data" class="administrative-form">
+    {{ form.hidden_tag() }}
+    {% include 'hospital_services/service_selector.html' %}
+    {{ employee_lookup(form, required=true) }}
+    {% for error in form.solicitud_id.errors %}<div class="notice error" role="alert">{{ error }}</div>{% endfor %}
+    <div class="form-grid">{{ field(form.nombres_apellidos) }}
+      <div class="admin-field vacation-total"><label class="form-label" for="total_dias">Total de días</label><input id="total_dias" name="total_dias" class="form-control" type="number" min="1" readonly value="{{ display_total if display_total is not none else '' }}" placeholder="Se calcula con las fechas" aria-describedby="total-dias-help" aria-live="polite"><small id="total-dias-help">Días corridos, incluidos inicio, término, fines de semana y feriados.</small></div>
+      {{ field(form.fecha_inicio, date=true) }}{{ field(form.fecha_termino, date=true) }}
+    </div>
+    <noscript><p class="module-no-script">El total se calculará y verificará al guardar. Activa JavaScript para verlo mientras eliges las fechas.</p></noscript>
+    {% include 'documents/upload.html' %}
+    <div class="form-actions"><button class="btn btn-primary" type="submit"><i class="bi bi-check2-circle" aria-hidden="true"></i> {{ 'GUARDAR MODIFICACIÓN' if record else 'GUARDAR VACACIONES' }}</button><a class="btn admin-secondary" href="{{ url_for('vacaciones.index') if record else url_for('main.dashboard') }}">CANCELAR</a>{% if can('records.read') %}<a class="btn admin-secondary" href="#registros">VER REGISTROS</a>{% endif %}</div>
+  </form>
+</section>
+{% if can('records.read') %}
+<section class="admin-panel records-panel" id="registros" aria-labelledby="records-heading">
+  <div class="panel-title"><div><h2 id="records-heading">Vacaciones registradas</h2><p>Períodos ordenados cronológicamente por fecha de inicio. Selecciona las fechas Desde y Hasta para generar la planilla del período.</p></div></div>
+  {{ filters_form(filters, url_for('vacaciones.index'), 'Se incluyen períodos que coinciden, total o parcialmente, con el rango seleccionado. Ambos extremos son inclusivos.', 'vacation-filters') }}
+  <div class="table-responsive"><table class="table admin-table"><caption class="visually-hidden">Registros de vacaciones</caption><thead><tr><th scope="col">Nombres y Apellidos</th><th scope="col">Inicio</th><th scope="col">Término</th><th scope="col">Total de días</th><th scope="col">Acción</th></tr></thead><tbody>
+    {% for item in records.items %}<tr><td><strong>{{ item.nombres_apellidos }}</strong>{{ owner(item) }}</td><td>{{ item.fecha_inicio.strftime('%d/%m/%Y') }}</td><td>{{ item.fecha_termino.strftime('%d/%m/%Y') }}</td><td><span class="vacation-days">{{ item.total_dias }} {{ 'día' if item.total_dias == 1 else 'días' }}</span></td><td><a class="record-edit" href="{{ url_for('vacaciones.edit', record_id=item.id) }}"><i class="bi bi-pencil-square" aria-hidden="true"></i> Editar<span class="visually-hidden"> vacaciones {{ item.id }}</span></a>{{ documents_link(item) }}{% if can('records.delete') %}<br><a class="record-edit" href="{{ url_for('record_lifecycle.delete', category_key='vacaciones', record_id=item.id) }}">Eliminar</a>{% endif %}</td></tr>
+    {% else %}<tr><td class="empty-records" colspan="5"><i class="bi bi-inbox" aria-hidden="true"></i>No hay vacaciones para mostrar con estos filtros.</td></tr>{% endfor %}
+  </tbody></table></div>{{ pagination(records, page_url) }}
+  {% if can('records.print') %}<div class="form-actions"><button class="btn admin-secondary" type="submit" form="vacation-filters" formaction="{{ url_for('vacaciones.planilla') }}"><i class="bi bi-printer" aria-hidden="true"></i> IMPRIMIR PLANILLA</button><button class="btn btn-primary" type="submit" form="vacation-filters" formaction="{{ url_for('vacaciones.planilla_excel') }}"><i class="bi bi-file-earmark-spreadsheet" aria-hidden="true"></i> DESCARGAR EXCEL</button></div>{% endif %}
+</section>
+{% endif %}
+{% endblock %}

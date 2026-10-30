@@ -1,0 +1,9 @@
+.leave-record-filters{grid-template-columns:minmax(170px,1.4fr) repeat(2,minmax(125px,1fr)) minmax(170px,1.2fr)}
+.leave-record-filters .filter-actions{grid-column:1/-1;padding-top:0;gap:15px}
+.leave-record-filters .filter-help{margin-top:0;line-height:1.8}
+.vacation-total .form-control[readonly]{color:#a2dcff;background:#18324c;border-color:#365e80;font-size:22px;font-weight:650;min-height:48px;font-variant-numeric:tabular-nums}
+.vacation-total .form-control::placeholder{font-size:12px;font-weight:400}
+.vacation-days{display:inline-flex;align-items:center;border:1px solid #365d7b;background:#1b374f;color:#bce4ff;border-radius:6px;padding:4px 10px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.leave-place{max-width:260px;overflow-wrap:anywhere;white-space:pre-wrap}
+@media(max-width:1200px){.leave-record-filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.leave-record-filters{grid-template-columns:1fr}}

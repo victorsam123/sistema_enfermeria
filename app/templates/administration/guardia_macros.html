@@ -1,0 +1,15 @@
+{% from 'administration/macros.html' import field %}
+{% macro detail_fields(row, index, locked=false) %}
+<article class="guardia-date-row" data-guardia-index="{{ index }}">
+  {{ row.detalle_id() }}
+  {% if locked %}<input type="hidden" id="{{ row.participante.id }}" name="{{ row.participante.name }}" value="{{ row.participante.data }}" data-participant>
+  {% else %}<div class="detail-row-heading"><h3>Fecha adicional</h3>{% if not row.detalle_id.data %}<button class="btn admin-secondary" type="button" data-remove-date><i class="bi bi-x-lg" aria-hidden="true"></i> Quitar fila sin guardar</button>{% else %}<span class="detail-saved">Fecha guardada #{{ row.detalle_id.data }}</span>{% endif %}</div>{% endif %}
+  <div class="guardia-detail-grid">
+    {% if not locked %}<div class="admin-field">{{ row.participante.label(class='form-label') }} <span class="required-mark">*</span>{{ row.participante(class='form-control', required=true, data_participant=true) }}{% for error in row.participante.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</div>{% endif %}
+    {{ field(row.fecha_guardia, date=true) }}
+    {% for input in (row.hora_inicio, row.hora_fin) %}<div class="admin-field">{{ input.label(class='form-label') }} <span class="required-mark">*</span>{% if loop.first %}{{ input(class='form-control', required=true, step=60, data_hour_start=true, aria_describedby=input.id ~ '-error') }}{% else %}{{ input(class='form-control', required=true, step=60, data_hour_end=true, aria_describedby=input.id ~ '-error') }}{% endif %}<div class="field-error" id="{{ input.id }}-error">{% for error in input.errors %}<span>{{ error }}</span>{% endfor %}</div></div>{% endfor %}
+    <div class="admin-field">{{ row.codigo.label(class='form-label') }}{{ row.codigo(class='form-control', data_code=true) }}{% for error in row.codigo.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</div>
+  </div>
+  {% for error in row.detalle_id.errors %}<div class="field-error" role="alert">{{ error }}</div>{% endfor %}
+</article>
+{% endmacro %}

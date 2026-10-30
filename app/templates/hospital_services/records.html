@@ -1,0 +1,11 @@
+{% extends 'administration/base.html' %}
+{% from 'administration/macros.html' import filters_form, pagination %}
+{% from 'hospital_services/macros.html' import record_table %}
+{% block subtitle %}SERVICIO: {{ service.nombre }} · {{ category.label }}{% endblock %}
+{% block admin_content %}
+<div class="service-tools"><a class="btn admin-secondary" href="{{ url_for('service_files.folder', service_id=service.id) }}"><i class="bi bi-arrow-left" aria-hidden="true"></i> VOLVER A LA CARPETA</a></div>
+<section class="admin-panel" id="registros">{{ filters_form(filters, url_for('service_files.records', service_id=service.id, category_key=category_key), 'movimiento') }}
+{{ record_table(category, records.items, matching_details, filters.desde.data, filters.hasta.data, actions=true, category_key=category_key) }}
+{{ pagination(records, page_url) }}
+</section>
+{% endblock %}

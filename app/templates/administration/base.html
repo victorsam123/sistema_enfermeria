@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}{{ page_title }} · Departamento de Enfermería{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{{ url_for('static', filename='css/employees.css') }}"><script src="{{ url_for('static', filename='js/employees.js') }}" defer></script><link rel="stylesheet" href="{{ url_for('static', filename='css/documents.css') }}"><script src="{{ url_for('static', filename='js/documents.js') }}" defer></script><link rel="stylesheet" href="{{ url_for('static', filename='css/user_accounts.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='css/hospital_services.css') }}"><script src="{{ url_for('static', filename='js/service_selection.js') }}" defer></script><link rel="stylesheet" href="{{ url_for('static', filename='css/administration.css') }}"><script src="{{ url_for('static', filename='js/administration.js') }}" defer></script>{% endblock %}
+{% block body %}
+<div class="dashboard-shell">
+  {% include 'includes/sidebar.html' %}
+  <div class="workspace">
+    {% include 'includes/header.html' %}
+    <main class="dashboard-content administrative-content">
+      <div class="breadcrumb-line"><a href="{{ url_for('main.dashboard') }}">Dashboard</a><i class="bi bi-chevron-right" aria-hidden="true"></i>{% block breadcrumb %}<strong>{{ page_title }}</strong>{% endblock %}</div>
+      {% include 'includes/clock.html' %}
+      <div class="page-heading"><div><p class="eyebrow">GESTIÓN ADMINISTRATIVA</p><h1>{{ page_title }}</h1><p>{% block subtitle %}Departamento de Enfermería · Hospital Regional CDE{% endblock %}</p></div><a class="btn admin-secondary" href="{{ url_for('main.dashboard') }}"><i class="bi bi-arrow-left" aria-hidden="true"></i> VOLVER AL PANEL PRINCIPAL</a></div>
+      {% for category, message in get_flashed_messages(with_categories=true) %}<div class="notice {{ category }}" role="status">{{ message }}</div>{% endfor %}
+      {% if save_error %}<div class="notice error" role="alert">{{ save_error }}</div>{% endif %}
+      {% block admin_content %}{% endblock %}
+      {% if form is defined and form.servicio_id is defined %}{% include 'hospital_services/service_dialog.html' %}{% endif %}
+    </main>
+    <footer class="dashboard-footer"><span>Hospital Regional CDE / Departamento de Enfermería</span><span>Sistema de Gestión Administrativa</span></footer>
+  </div>
+</div>
+{% endblock %}

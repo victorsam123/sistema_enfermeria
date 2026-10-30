@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0c1322">
+  <title>{% block title %}Departamento de Enfermería · Hospital Regional CDE{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap-icons.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="{{ 'loading-only' if current_user.is_authenticated and not can('records.read') else '' }}">{% block body %}{% endblock %}</body>
+</html>

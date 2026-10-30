@@ -1,0 +1,33 @@
+{% macro field(input, date=false, multiline=false, maxlength=180, optional=false) %}
+<div class="admin-field {{ 'wide-field' if multiline else '' }}">
+  {{ input.label(class='form-label') }} {% if optional %}<small class="optional-label">OPCIONAL</small>{% else %}<span class="required-mark" aria-hidden="true">*</span>{% endif %}
+  {% if date %}
+  <div class="date-control">
+    {{ input(type='text', class='form-control', required=not optional, autocomplete='off', aria_describedby=input.id ~ '-help ' ~ input.id ~ '-error', aria_invalid='true' if input.errors else 'false') }}
+    <i class="bi bi-calendar3" aria-hidden="true"></i>
+    <input class="native-date-picker" type="date" data-date-for="{{ input.id }}" aria-label="Seleccionar {{ input.label.text }}" {% if input.data %}value="{{ input.data.isoformat() }}"{% endif %}>
+  </div><small id="{{ input.id }}-help">DD/MM/AAAA · Usa el calendario o escribe la fecha.</small>
+  {% elif multiline %}
+  {{ input(class='form-control', rows=4, required=true, minlength=3, maxlength=maxlength, aria_describedby=input.id ~ '-error', aria_invalid='true' if input.errors else 'false') }}
+  <small>Máximo {{ maxlength }} caracteres.</small>
+  {% else %}
+  {{ input(class='form-control', required=true, minlength=3, maxlength=maxlength, autocomplete='off', aria_describedby=input.id ~ '-error', aria_invalid='true' if input.errors else 'false') }}
+  {% endif %}
+  <div class="field-error" id="{{ input.id }}-error">{% for error in input.errors %}<span>{{ error }}</span>{% endfor %}</div>
+</div>
+{% endmacro %}
+
+{% macro filters_form(filters, clear_url, date_label) %}
+<form method="get" action="{{ clear_url }}#registros" class="record-filters">
+  <div class="admin-field">{{ filters.q.label(class='form-label') }}{{ filters.q(class='form-control', maxlength=180, placeholder='Nombres y apellidos') }}{% for error in filters.q.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</div>
+  {% for input in (filters.desde, filters.hasta) %}
+  <div class="admin-field">{{ input.label(class='form-label') }}<div class="date-control">{{ input(type='text', class='form-control', autocomplete='off') }}<i class="bi bi-calendar3" aria-hidden="true"></i><input class="native-date-picker" type="date" data-date-for="{{ input.id }}" aria-label="Seleccionar {{ input.label.text }}" {% if input.data %}value="{{ input.data.isoformat() }}"{% endif %}></div>{% for error in input.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</div>
+  {% endfor %}
+  <div class="filter-actions"><button class="btn admin-secondary" type="submit"><i class="bi bi-search" aria-hidden="true"></i> Buscar</button><a href="{{ clear_url }}#registros" class="filter-clear">Limpiar filtros</a></div>
+  <small class="filter-help">Rango inclusivo de {{ date_label }}.</small>
+</form>
+{% endmacro %}
+
+{% macro pagination(records, page_url) %}
+<nav class="record-pagination" aria-label="Paginación de registros"><span>{{ records.total }} registro{{ 's' if records.total != 1 else '' }} · Página {{ records.page }} de {{ records.pages or 1 }}</span><div>{% if records.has_prev %}<a class="btn admin-secondary" href="{{ page_url(records.prev_num) }}#registros">Anterior</a>{% endif %}{% if records.has_next %}<a class="btn admin-secondary" href="{{ page_url(records.next_num) }}#registros">Siguiente</a>{% endif %}</div></nav>
+{% endmacro %}

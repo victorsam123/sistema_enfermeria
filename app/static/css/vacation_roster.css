@@ -1,0 +1,27 @@
+.vacation-roster{background:#fff;color:#111;padding:1rem;overflow-x:auto}
+.roster-brand{height:.85in;display:flex;align-items:center;justify-content:center}
+.roster-brand img{display:block;width:90%;height:.65in;object-fit:fill}
+.vacation-roster h2{text-align:center;font-size:.9rem;margin:.1rem 0 .25rem;font-weight:700}
+.roster-table{border-collapse:collapse;table-layout:fixed;width:100%;font-family:Arial,sans-serif;font-size:7px}
+.roster-table col:nth-child(1){width:4.7%}.roster-table col:nth-child(2){width:14.4%}.roster-table col:nth-child(3){width:4.4%}
+.roster-table col:nth-child(4){width:8.3%}.roster-table col:nth-child(5){width:11%}.roster-table col:nth-child(6){width:7.4%}
+.roster-table col:nth-child(7){width:4.4%}.roster-table col:nth-child(8){width:10.5%}.roster-table col:nth-child(9){width:11.8%}
+.roster-table col:nth-child(10){width:4.4%}.roster-table col:nth-child(11){width:4.4%}.roster-table col:nth-child(12){width:14.1%}
+.roster-table th,.roster-table td{border:1px solid #111;padding:3px 2px;text-align:center;vertical-align:middle;overflow-wrap:anywhere}
+.roster-table th{font-weight:700}
+.roster-table td:nth-child(2),.roster-table td:nth-child(5),.roster-table td:nth-child(7),.roster-table td:nth-child(11),.roster-table td:nth-child(12){text-align:left}
+.roster-table tbody tr{height:20px}
+.roster-notice{margin:.5rem 0;color:#7a2c00;font-size:.8rem}
+@page{size:A4 portrait;margin:19.05mm 17.78mm}
+@media print{
+  body{background:#fff!important;color:#111!important}
+  .sidebar,.app-header,.dashboard-clock,.breadcrumb-line,.page-heading,.dashboard-footer,.print-tools,.roster-notice,.notice{display:none!important}
+  .workspace{margin:0!important;width:100%!important}
+  .dashboard-content{padding:0!important}
+  .vacation-roster{padding:0!important;overflow:visible}
+  .roster-brand{height:.78in}
+  .roster-brand img{width:90%;height:.65in}
+  .roster-table{font-size:6.5pt;page-break-inside:auto}
+  .roster-table thead{display:table-header-group}
+  .roster-table tr{page-break-inside:avoid}
+}

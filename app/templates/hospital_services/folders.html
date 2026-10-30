@@ -1,0 +1,9 @@
+{% extends 'administration/base.html' %}
+{% block subtitle %}Carpetas virtuales vinculadas a PostgreSQL. Cada registro permanece en su módulo y en su servicio.{% endblock %}
+{% block admin_content %}
+<div class="service-tools"><a class="btn btn-primary" href="{{ url_for('reports.index') }}"><i class="bi bi-file-earmark-spreadsheet" aria-hidden="true"></i> INFORMES EXCEL</a>{% if can('services.manage') %}<a class="btn admin-secondary" href="{{ url_for('service_settings.index') }}">CONFIGURAR SERVICIOS</a>{% endif %}</div>
+<div class="service-folder-grid">
+{% for service, total, last in folders %}<article class="service-folder"><i class="bi bi-folder2-open folder-icon" aria-hidden="true"></i><h2>{{ service.nombre }}</h2><p><strong class="service-count">{{ total }}</strong> registro{{ 's' if total != 1 else '' }}</p><small>Última carga: {{ last|fecha_local }}{% if not service.activo %}<br>{{ 'Clasificación pendiente' if service.codigo == 'PENDIENTE' else 'Servicio inactivo: conserva sus registros' }}{% endif %}</small><a class="btn admin-secondary" href="{{ url_for('service_files.folder', service_id=service.id) }}">ABRIR CARPETA<span class="visually-hidden"> {{ service.nombre }}</span></a></article>
+{% else %}<div class="admin-panel"><p>No hay carpetas con registros. Al guardar la primera carga se mostrará automáticamente la carpeta de su servicio.</p></div>{% endfor %}
+</div>
+{% endblock %}

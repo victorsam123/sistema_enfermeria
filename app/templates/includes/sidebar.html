@@ -1,0 +1,22 @@
+<aside class="sidebar" id="sidebar" aria-label="Menú principal">
+  <a class="sidebar-brand" href="{{ url_for('main.dashboard') }}"><span class="brand-mark"><i class="bi bi-plus-lg" aria-hidden="true"></i></span><span>HOSPITAL REGIONAL<strong>CDE <span>/ ENFERMERÍA</span></strong></span></a>
+  <div class="nav-label">ESPACIO ADMINISTRATIVO</div>
+  <nav>
+    <a class="nav-item {{ 'active' if request.blueprint == 'main' else '' }}" href="{{ url_for('main.dashboard') }}" {% if request.blueprint == 'main' %}aria-current="page"{% endif %}><i class="bi bi-grid-1x2" aria-hidden="true"></i> Inicio / Dashboard</a>
+    <div class="nav-label module-nav-label">MÓDULOS DEL SISTEMA</div>
+    <a class="nav-item {{ 'active' if request.blueprint == 'justificativos' else '' }}" href="{{ url_for('justificativos.index') }}"><i class="bi bi-file-earmark-medical" aria-hidden="true"></i> Justificativo</a>
+    <a class="nav-item {{ 'active' if request.blueprint == 'reposo' else '' }}" href="{{ url_for('reposo.index') }}"><i class="bi bi-heart-pulse" aria-hidden="true"></i> Reposo</a>
+    <a class="nav-item {{ 'active' if request.endpoint == 'guardias.normal' else '' }}" href="{{ url_for('guardias.normal') }}"><i class="bi bi-arrow-left-right" aria-hidden="true"></i> Cambio de Guardia</a>
+    <a class="nav-item {{ 'active' if request.endpoint == 'guardias.pagada' else '' }}" href="{{ url_for('guardias.pagada') }}"><i class="bi bi-calendar2-check" aria-hidden="true"></i> Guardia pagada</a>
+    <a class="nav-item {{ 'active' if request.blueprint == 'vacaciones' else '' }}" href="{{ url_for('vacaciones.index') }}"><i class="bi bi-calendar2-week" aria-hidden="true"></i> Vacaciones</a>
+    <a class="nav-item {{ 'active' if request.blueprint == 'comisionados' else '' }}" href="{{ url_for('comisionados.index') }}"><i class="bi bi-people" aria-hidden="true"></i> Comisionados</a>
+    {% if can('employees.read') %}<a class="nav-item {{ 'active' if request.blueprint == 'employees' else '' }}" href="{{ url_for('employees.search') }}"><i class="bi bi-person-vcard" aria-hidden="true"></i> Funcionario</a>{% endif %}
+    {% if can('files.read') %}<a class="nav-item {{ 'active' if request.blueprint == 'service_files' else '' }}" href="{{ url_for('service_files.index') }}"><i class="bi bi-folder2-open" aria-hidden="true"></i> Archivos por Servicio</a>{% endif %}
+    {% if can('reports.export') %}<a class="nav-item {{ 'active' if request.blueprint == 'reports' else '' }}" href="{{ url_for('reports.index') }}"><i class="bi bi-file-earmark-spreadsheet" aria-hidden="true"></i> Informes Excel</a>{% endif %}
+    {% if can('services.manage') %}<a class="nav-item {{ 'active' if request.blueprint == 'service_settings' else '' }}" href="{{ url_for('service_settings.index') }}"><i class="bi bi-sliders" aria-hidden="true"></i> Configuración de servicios</a>{% endif %}
+    {% if can('users.manage') %}<a class="nav-item {{ 'active' if request.blueprint == 'users' else '' }}" href="{{ url_for('users.index') }}"><i class="bi bi-person-gear" aria-hidden="true"></i> Gestión de Usuarios</a>{% endif %}
+    {% if can('activity.read') %}<a class="nav-item" href="{{ url_for('service_settings.history') }}"><i class="bi bi-clock-history" aria-hidden="true"></i> Historial administrativo</a>{% endif %}
+    {% if can('records.restore') %}<a class="nav-item" href="{{ url_for('record_lifecycle.trash') }}"><i class="bi bi-trash3" aria-hidden="true"></i> Registros eliminados</a>{% endif %}
+  </nav>
+  <div class="sidebar-bottom"><i class="bi bi-shield-check" aria-hidden="true"></i><div>Administración segura<small>Acceso institucional protegido</small></div></div>
+</aside>

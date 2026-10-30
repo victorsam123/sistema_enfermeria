@@ -1,0 +1,11 @@
+<fieldset class="document-upload" data-document-upload data-max-bytes="{{ document_max_bytes }}" data-max-files="{{ document_max_files }}">
+<legend><i class="bi bi-camera" aria-hidden="true"></i> DOCUMENTOS ADJUNTOS</legend>
+<p>Adjuntar fotografías del documento respaldatorio. <span class="optional-label">OPCIONAL</span></p>
+<p class="record-meta">JPG, JPEG, PNG o WEBP · Hasta {{ document_max_files }} fotografías activas por registro · {{ document_max_bytes // 1048576 }} MB por fotografía. Convierte HEIC antes de cargarlo.</p>
+{{ form.fotografias(class='form-control document-file', accept='.jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp', multiple=true) }}
+<div class="document-picker-actions"><label class="btn admin-secondary document-select" for="{{ form.fotografias.id }}"><i class="bi bi-images" aria-hidden="true"></i> SELECCIONAR FOTOGRAFÍAS</label><label class="btn admin-secondary document-camera-button" for="document-camera" hidden><i class="bi bi-camera" aria-hidden="true"></i> TOMAR FOTO</label><input class="visually-hidden document-camera" id="document-camera" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" tabindex="-1"></div>
+<div class="field-error" role="alert" data-upload-error>{% for error in form.fotografias.errors %}<span>{{ error }}</span>{% endfor %}{% for error in form.adjuntos_lote.errors %}<span>{{ error }}</span>{% endfor %}</div>
+<div class="document-previews" data-upload-previews aria-live="polite"></div><p class="record-meta" data-upload-count>Sin fotografías seleccionadas.</p>
+{% if request.method == 'POST' %}<p class="record-meta">Si la operación no se completó, vuelve a seleccionar las fotografías antes de guardar.</p>{% endif %}
+<noscript><p class="record-meta">Puedes seleccionar varias imágenes con el selector de archivos. La validación se realiza también en el servidor.</p></noscript>
+</fieldset>

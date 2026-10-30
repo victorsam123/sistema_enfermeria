@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block body %}
+<main class="login-page">
+  <div class="login-top"><a class="institution" href="{{ url_for('auth.login') }}"><span class="brand-mark"><i class="bi bi-plus-lg" aria-hidden="true"></i></span><span>HOSPITAL REGIONAL <strong>CDE</strong></span></a><span class="top-caption">PLATAFORMA ADMINISTRATIVA</span></div>
+  <section class="login-card" aria-labelledby="login-title">
+    <div class="card-accent"></div>
+    <div class="login-identity"><span class="medical-mark"><i class="bi bi-heart-pulse" aria-hidden="true"></i></span><p class="eyebrow">HOSPITAL REGIONAL CDE</p><h1 id="login-title">DEPARTAMENTO<br>DE ENFERMERÍA</h1><p class="muted">Sistema de Gestión Administrativa</p></div>
+    <div class="login-divider"></div>
+    <div class="form-intro"><h2>Bienvenido de nuevo</h2><p>Ingresa tus credenciales para acceder al sistema.</p></div>
+    {% for category, message in get_flashed_messages(with_categories=true) %}<div class="notice {{ category }}" role="status">{{ message }}</div>{% endfor %}
+    {% if error %}<div class="notice error" role="alert"><i class="bi bi-exclamation-circle" aria-hidden="true"></i> {{ error }}</div>{% endif %}
+    <form method="post" novalidate>
+      {{ form.hidden_tag() }}
+      <label for="username" class="form-label">Usuario</label>
+      <div class="input-shell"><i class="bi bi-person" aria-hidden="true"></i>{{ form.username(id='username', autocomplete='username', placeholder='Ingresa tu usuario', required=true, maxlength=80) }}</div>
+      {% for error in form.username.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      <label for="password" class="form-label password-label">Contraseña</label>
+      <div class="input-shell"><i class="bi bi-lock" aria-hidden="true"></i>{{ form.password(id='password', autocomplete='current-password', placeholder='Ingresa tu contraseña', required=true, maxlength=256) }}<button type="button" class="password-toggle" id="toggle-password" aria-label="Mostrar contraseña" aria-pressed="false"><i class="bi bi-eye" aria-hidden="true"></i></button></div>
+      {% for error in form.password.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      <div class="session-hint"><i class="bi bi-shield-check" aria-hidden="true"></i> Acceso exclusivo para personal autorizado</div>
+      <button class="btn btn-primary login-submit" type="submit">INGRESAR AL SISTEMA <i class="bi bi-arrow-right" aria-hidden="true"></i></button>
+    </form>
+    <div class="login-footnote"><span class="small-dot"></span> Entorno de acceso protegido</div>
+  </section>
+  <footer class="login-footer"><span>Departamento de Enfermería · Hospital Regional de Ciudad del Este</span><span>Gestión institucional</span></footer>
+</main>
+{% endblock %}

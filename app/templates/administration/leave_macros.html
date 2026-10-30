@@ -1,0 +1,15 @@
+{% macro owner(item) %}
+<small class="record-meta">{{ item.servicio.nombre }}<br>#{{ item.id }} · {{ item.usuario_registro.username }}<br>{{ item.fecha_creacion|fecha_local }}{% if item.usuario_modificacion_id %}<br>Editado por {{ item.usuario_modificacion.username }} · {{ item.fecha_modificacion|fecha_local }}{% endif %}</small>
+{% endmacro %}
+
+{% macro filters_form(filters, clear_url, help_text, form_id='') %}
+<form{% if form_id %} id="{{ form_id }}"{% endif %} method="get" action="{{ clear_url }}#registros" class="record-filters leave-record-filters">
+  <div class="admin-field">{{ filters.q.label(class='form-label') }}{{ filters.q(class='form-control', maxlength=180, placeholder='Nombres y apellidos') }}{% for error in filters.q.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</div>
+  {% for input in (filters.desde, filters.hasta) %}
+  <div class="admin-field">{{ input.label(class='form-label') }}<div class="date-control">{{ input(type='text', class='form-control', autocomplete='off') }}<i class="bi bi-calendar3" aria-hidden="true"></i><input class="native-date-picker" type="date" data-date-for="{{ input.id }}" aria-label="Seleccionar {{ input.label.text }}" {% if input.data %}value="{{ input.data.isoformat() }}"{% endif %}></div>{% for error in input.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</div>
+  {% endfor %}
+  <div class="admin-field">{{ filters.orden.label(class='form-label') }}{{ filters.orden(class='form-control') }}{% for error in filters.orden.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</div>
+  <div class="filter-actions"><button class="btn admin-secondary" type="submit"><i class="bi bi-search" aria-hidden="true"></i> Buscar</button><a href="{{ clear_url }}#registros" class="filter-clear">Limpiar filtros</a></div>
+  <small class="filter-help">{{ help_text }}</small>
+</form>
+{% endmacro %}

@@ -1,0 +1,7 @@
+<div class="service-selector admin-field">
+  {{ form.servicio_id.label(class='form-label') }} <span aria-hidden="true">*</span>
+  {{ form.servicio_id(class='form-control', data_service_selector='true', aria_describedby='service-help') }}
+  <small id="service-help">El registro se guardará en la carpeta virtual del servicio seleccionado.</small>
+  {% for error in form.servicio_id.errors %}<span class="field-error" role="alert">{{ error }}</span>{% endfor %}
+  {% if record is defined and record and record.servicio.codigo == 'PENDIENTE' %}<p class="service-pending">Registro anterior pendiente de clasificación. Selecciona su servicio para guardar la edición.</p>{% endif %}
+</div>

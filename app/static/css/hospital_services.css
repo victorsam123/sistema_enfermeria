@@ -1,0 +1,26 @@
+.service-selector { margin: 0 0 1.4rem; max-width: 42rem; }
+.service-selector small { display: block; color: var(--text-muted, #9baec5); margin-top: .45rem; }
+.service-pending { color: #ffd188; margin-top: .7rem; }
+.service-dialog { max-width: 38rem; }
+.service-dialog h2 { font-size: 1.25rem; line-height: 1.6; }
+.service-dialog .form-actions { justify-content: center; }
+.service-folder-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(245px,1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+.service-folder { border: 1px solid #2a3d55; background: linear-gradient(130deg,#142339,#101b2c); border-radius: 16px; padding: 1.4rem; min-width: 0; }
+.service-folder h2 { font-size: 1.1rem; margin: 1rem 0 .6rem; }
+.service-folder p { color: #a8b7ca; }
+.service-folder small { display: block; color: #92a7c2; margin-bottom: 1rem; }
+.service-folder .folder-icon { font-size: 2.2rem; color: #59c9ff; }
+.service-folder:hover { border-color: #52bff0; }
+.service-tools { display: flex; flex-wrap: wrap; gap: .8rem; margin-bottom: 1.2rem; }
+.service-count { color: #70d2ff; font-weight: 600; }
+.report-form .form-actions { flex-wrap: wrap; }
+.report-summary { color: #a6bdd6; margin: 1rem 0; }
+.report-section { margin-top: 1.5rem; }
+.report-section h3 { font-size: 1.05rem; margin: 1rem 0; }
+.report-service-title { color: #79d5ff; font-size: 1.3rem; }
+.service-table td { max-width: 28rem; white-space: normal; overflow-wrap: anywhere; }
+.service-table .reason-cell { min-width: 14rem; }
+.report-form { max-width: 75rem; }
+.report-filter-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1rem; }
+.service-status { font-size: .82rem; color: #9fb8cf; }
+@media(max-width:600px) { .report-filter-grid { grid-template-columns: 1fr; } .service-folder-grid { grid-template-columns: 1fr; } }

@@ -1,0 +1,16 @@
+.user-password-control { display: flex; gap: .5rem; }
+.user-password-control .form-control { min-width: 0; }
+.user-password-control button { flex-shrink: 0; }
+.user-actions { display: flex; gap: .8rem; flex-wrap: wrap; margin-bottom: .5rem; }
+.profile-password-link { display: block; padding: .7rem 0; color: #8fd8ff; }
+@media print {
+  body { background: #fff !important; color: #111 !important; }
+  .sidebar, .app-header, .dashboard-clock, .breadcrumb-line, .page-heading, .dashboard-footer, .print-tools, .notice { display: none !important; }
+  .workspace { margin-left: 0 !important; width: 100% !important; }
+  .dashboard-content { padding: 0 !important; }
+  .admin-panel, .admin-table, .admin-table td, .admin-table th { background: #fff !important; color: #111 !important; border-color: #999 !important; box-shadow: none !important; }
+  .admin-table thead { display: table-header-group; }
+  body.loading-only > * { display: none !important; }
+  body.loading-only::before { content: 'No tiene permisos para realizar esta operación'; display: block; }
+  @page { size: A4 landscape; margin: 12mm; }
+}

@@ -1,0 +1,6 @@
+<section class="dashboard-clock" id="dashboard-clock" aria-label="Fecha y hora de Paraguay"
+         data-epoch-ms="{{ clock.epoch_ms }}" data-offset-seconds="{{ clock.utc_offset_seconds }}"
+         data-sync-url="{{ url_for('main.clock') }}">
+  <div class="clock-location"><span class="clock-icon"><i class="bi bi-clock" aria-hidden="true"></i></span><div><strong>Horario de Paraguay</strong><span>America/Asuncion</span></div></div>
+  <div class="clock-readout"><div><span class="clock-label">Fecha:</span><time id="dashboard-date" datetime="{{ clock.iso[:10] }}">{{ clock.date }}</time></div><div><span class="clock-label">Hora:</span><time id="dashboard-time" datetime="{{ clock.iso }}">{{ clock.time }}</time></div></div>
+</section>

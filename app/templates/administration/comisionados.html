@@ -1,0 +1,32 @@
+{% extends 'administration/leave_base.html' %}
+{% from 'administration/macros.html' import field, pagination %}
+{% from 'administration/leave_macros.html' import filters_form, owner %}
+{% block subtitle %}Registro y consulta de comisiones e inasistencias.{% endblock %}
+{% from 'documents/macros.html' import documents_link %}
+{% from 'employees/lookup.html' import employee_lookup %}
+{% block admin_content %}
+<section class="admin-panel" aria-labelledby="form-heading">
+  <div class="panel-title"><span class="stat-icon blue"><i class="bi bi-people" aria-hidden="true"></i></span><div><h2 id="form-heading">{{ 'Editar comisionado #' ~ record.id if record else 'Nuevo comisionado' }}</h2><p>Los campos con * son obligatorios.</p></div></div>
+  <form method="post" enctype="multipart/form-data" class="administrative-form">
+    {{ form.hidden_tag() }}
+    {% include 'hospital_services/service_selector.html' %}
+    {{ employee_lookup(form) }}
+    {% for error in form.solicitud_id.errors %}<div class="notice error" role="alert">{{ error }}</div>{% endfor %}
+    <div class="form-grid">{{ field(form.nombres_apellidos) }}{{ field(form.fecha_inasistencia, date=true) }}{{ field(form.motivo, multiline=true, maxlength=2000) }}
+      <div class="admin-field">{{ form.lugar.label(class='form-label') }} <span class="required-mark" aria-hidden="true">*</span>{{ form.lugar(class='form-control', required=true, minlength=2, maxlength=250, autocomplete='off', aria_describedby='lugar-error', aria_invalid='true' if form.lugar.errors else 'false') }}<div class="field-error" id="lugar-error">{% for error in form.lugar.errors %}<span>{{ error }}</span>{% endfor %}</div></div>
+    </div>
+    {% include 'documents/upload.html' %}
+    <div class="form-actions"><button class="btn btn-primary" type="submit"><i class="bi bi-check2-circle" aria-hidden="true"></i> {{ 'GUARDAR MODIFICACIÓN' if record else 'GUARDAR COMISIONADO' }}</button><a class="btn admin-secondary" href="{{ url_for('comisionados.index') if record else url_for('main.dashboard') }}">CANCELAR</a>{% if can('records.read') %}<a class="btn admin-secondary" href="#registros">VER REGISTROS</a>{% endif %}</div>
+  </form>
+</section>
+{% if can('records.read') %}
+<section class="admin-panel records-panel" id="registros" aria-labelledby="records-heading">
+  <div class="panel-title"><div><h2 id="records-heading">Comisionados registrados</h2><p>Consulta por funcionario, fecha y lugar de la comisión.</p></div></div>
+  {{ filters_form(filters, url_for('comisionados.index'), 'Rango inclusivo de fecha de inasistencia. El orden inicial muestra las fechas más recientes primero.') }}
+  <div class="table-responsive"><table class="table admin-table"><caption class="visually-hidden">Registros de comisionados</caption><thead><tr><th scope="col">Nombres y Apellidos</th><th scope="col">Fecha de inasistencia</th><th scope="col">Motivo</th><th scope="col">Lugar</th><th scope="col">Acción</th></tr></thead><tbody>
+    {% for item in records.items %}<tr><td><strong>{{ item.nombres_apellidos }}</strong>{{ owner(item) }}</td><td>{{ item.fecha_inasistencia.strftime('%d/%m/%Y') }}</td><td class="reason-cell">{{ item.motivo }}</td><td class="leave-place">{{ item.lugar }}</td><td><a class="record-edit" href="{{ url_for('comisionados.edit', record_id=item.id) }}"><i class="bi bi-pencil-square" aria-hidden="true"></i> Editar<span class="visually-hidden"> comisionado {{ item.id }}</span></a>{{ documents_link(item) }}{% if can('records.delete') %}<br><a class="record-edit" href="{{ url_for('record_lifecycle.delete', category_key='comisionados', record_id=item.id) }}">Eliminar</a>{% endif %}{% if can('records.print') %}<br><a class="record-edit" href="{{ url_for('record_print.view', category_key='comisionados', record_id=item.id) }}">Imprimir</a>{% endif %}</td></tr>
+    {% else %}<tr><td class="empty-records" colspan="5"><i class="bi bi-inbox" aria-hidden="true"></i>No hay comisionados para mostrar con estos filtros.</td></tr>{% endfor %}
+  </tbody></table></div>{{ pagination(records, page_url) }}
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,5 @@
+.reposo-total .form-control[readonly]{color:#a2dcff;background:#18324c;border-color:#365e80;font-size:22px;font-weight:650;min-height:48px;font-variant-numeric:tabular-nums}
+.reposo-total .form-control::placeholder{font-size:12px;font-weight:400}
+.reposo-days{display:inline-flex;border:1px solid #365d7b;background:#1b374f;color:#bce4ff;border-radius:6px;padding:4px 10px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.reposos-table{min-width:1050px;border:1px solid #385370}.reposos-table caption{caption-side:top;text-align:center;color:#c5e6ff;background:#152c46;border:1px solid #385370;border-bottom:0;border-radius:8px 8px 0 0;padding:14px;font-size:12px;font-weight:650;letter-spacing:1px}
+.reposos-table thead th{background:#203f60;color:#c4e8ff;border-right:1px solid #44617d}.reposos-table td{border-right:1px solid #344a64}.reposos-table .reason-cell{min-width:200px;max-width:340px}

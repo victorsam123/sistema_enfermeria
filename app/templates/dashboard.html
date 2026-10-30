@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Inicio · Departamento de Enfermería{% endblock %}
+{% block body %}
+<div class="dashboard-shell">
+  {% include 'includes/sidebar.html' %}
+  <div class="workspace">
+    {% include 'includes/header.html' %}
+    <main class="dashboard-content">
+      <div class="breadcrumb-line"><span>Espacio administrativo</span><i class="bi bi-chevron-right" aria-hidden="true"></i><strong>Inicio</strong></div>
+      {% include 'includes/clock.html' %}
+      <div class="page-heading"><div><p class="eyebrow">PANEL ADMINISTRATIVO</p><h1>Vista general</h1><p>Tu punto de acceso a la gestión institucional.</p></div><span class="environment-badge"><i class="bi bi-shield-check" aria-hidden="true"></i> Sesión autenticada</span></div>
+      <section class="welcome-panel"><div class="welcome-copy"><span class="welcome-label">DEPARTAMENTO DE ENFERMERÍA</span><h2>Bienvenido al Sistema de Gestión<br class="desktop-break"> del Departamento de Enfermería</h2><p>Hospital Regional de Ciudad del Este</p><span class="welcome-rule"></span><div class="welcome-note"><i class="bi bi-person-check" aria-hidden="true"></i> Hola, {{ current_user.username }}. Tu espacio de trabajo está listo.</div></div><div class="welcome-symbol" aria-hidden="true"><i class="bi bi-heart-pulse"></i></div></section>
+      <section class="administrative-modules" aria-labelledby="modules-heading">
+        <div class="section-heading"><h2 id="modules-heading">Módulos administrativos</h2><span>Accesos del sistema</span></div>
+        <div class="module-grid service-module-grid">
+          {% for module in modules %}
+          {% if module.endpoint %}<a class="module-access" href="{{ url_for(module.endpoint) }}">
+          {% else %}<button class="module-access" type="button" data-module="{{ module.slug }}" data-module-label="{{ module.label }}" aria-haspopup="dialog" aria-controls="module-dialog">{% endif %}
+            <span class="module-access-icon"><i class="bi {{ module.icon }}" aria-hidden="true"></i></span>
+            <span class="module-access-label">{{ module.label }}</span>
+            {% if not module.endpoint %}<span class="module-access-state">En desarrollo</span>{% endif %}
+          {% if module.endpoint %}</a>{% else %}</button>{% endif %}
+          {% endfor %}
+        </div>
+        <noscript><p class="module-no-script">Activa JavaScript para actualizar el reloj y ver los avisos de los módulos pendientes.</p></noscript>
+      </section>
+      <div class="section-heading"><h2>Estado de tu entorno</h2><span>Información verificada al cargar esta página</span></div>
+      <section class="status-grid" aria-label="Información del sistema">
+        <article class="status-card"><span class="stat-icon green"><i class="bi bi-activity" aria-hidden="true"></i></span><p>Estado del sistema</p><h3>{{ 'Operativo' if connected else 'Servicio limitado' }}</h3><span class="stat-detail"><span class="small-dot {{ '' if connected else 'warning' }}"></span>{{ 'Servicios disponibles' if connected else 'Revisa la conexión' }}</span></article>
+        <article class="status-card"><span class="stat-icon blue"><i class="bi bi-database-check" aria-hidden="true"></i></span><p>Base de datos</p><h3>{{ 'Conectada' if connected else 'No disponible' }}</h3><span class="stat-detail">PostgreSQL · {{ 'Conexión verificada' if connected else 'Comprobación fallida' }}</span></article>
+        <article class="status-card"><span class="stat-icon violet"><i class="bi bi-person" aria-hidden="true"></i></span><p>Usuario conectado</p><h3>{{ current_user.username }}</h3><span class="stat-detail">Sesión activa</span></article>
+        <article class="status-card"><span class="stat-icon amber"><i class="bi bi-shield-lock" aria-hidden="true"></i></span><p>Rol de acceso</p><h3 class="role-value">{{ current_user.rol_nombre }}</h3><span class="stat-detail">{{ 'Cuenta permanente protegida' if current_user.protegido else 'Permisos según tu rol' }}</span></article>
+      </section>
+      <section class="modules-panel"><span class="module-icon"><i class="bi bi-boxes" aria-hidden="true"></i></span><div><span class="eyebrow">UNA BASE PARA CRECER</span><h2>Preparado para lo que viene</h2><p>El sistema se encuentra preparado para la incorporación de nuevos módulos administrativos.</p></div><span class="upcoming-badge">PRÓXIMAMENTE</span></section>
+      <div class="security-note"><i class="bi bi-lock" aria-hidden="true"></i> Acceso restringido a personal autorizado. Los eventos de acceso se registran para seguridad institucional.</div>
+    </main>
+    <footer class="dashboard-footer"><span>Hospital Regional CDE <span class="footer-separator">/</span> Departamento de Enfermería</span><span>Sistema de Gestión Administrativa</span></footer>
+  </div>
+</div>
+<dialog class="module-dialog" id="module-dialog" aria-labelledby="module-dialog-title" aria-describedby="module-dialog-description">
+  <span class="module-dialog-icon"><i class="bi bi-tools" aria-hidden="true"></i></span>
+  <p class="eyebrow">MÓDULO ADMINISTRATIVO</p>
+  <h2 id="module-dialog-title">Módulo del sistema</h2>
+  <p id="module-dialog-description">Este módulo se encuentra en desarrollo</p>
+  <form method="dialog"><button class="btn btn-primary" autofocus>Entendido</button></form>
+</dialog>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends 'administration/leave_base.html' %}
+{% from 'administration/macros.html' import field, pagination %}
+{% from 'administration/leave_macros.html' import filters_form, owner %}
+{% block leave_scripts %}<link rel="stylesheet" href="{{ url_for('static', filename='css/reposos.css') }}"><script src="{{ url_for('static', filename='js/reposos.js') }}" defer></script>{% endblock %}
+{% block subtitle %}Registro de reposos y entrega de documentos al Departamento.{% endblock %}
+{% from 'documents/macros.html' import documents_link %}
+{% from 'employees/lookup.html' import employee_lookup %}
+{% block admin_content %}
+<section class="admin-panel" aria-labelledby="form-heading">
+  <div class="panel-title"><span class="stat-icon blue"><i class="bi bi-heart-pulse" aria-hidden="true"></i></span><div><h2 id="form-heading">{{ 'Editar reposo #' ~ record.id if record else 'Nuevo reposo' }}</h2><p>Los campos con * son obligatorios. El total incluye ambas fechas.</p></div></div>
+  <form method="post" enctype="multipart/form-data" class="administrative-form">
+    {{ form.hidden_tag() }}
+    {% include 'hospital_services/service_selector.html' %}
+    {{ employee_lookup(form) }}
+    {% for error in form.solicitud_id.errors %}<div class="notice error" role="alert">{{ error }}</div>{% endfor %}
+    <div class="form-grid">{{ field(form.nombres_apellidos) }}
+      <div class="admin-field reposo-total"><label for="total_dias" class="form-label">Total de días</label><input id="total_dias" name="total_dias" class="form-control" type="number" readonly min="1" value="{{ display_total if display_total is not none else '' }}" placeholder="Se calcula con las fechas" aria-describedby="total-dias-help" aria-live="polite"><small id="total-dias-help">Días calendario, incluidos el día de inicio y el día final.</small></div>
+      {{ field(form.fecha_desde, date=true) }}{{ field(form.fecha_hasta, date=true) }}
+      <div class="admin-field wide-field">{{ form.diagnostico.label(class='form-label') }} <span class="required-mark" aria-hidden="true">*</span>{{ form.diagnostico(class='form-control', rows=4, required=true, minlength=1, maxlength=2000, aria_describedby='diagnostico-error diagnostico-help', aria_invalid='true' if form.diagnostico.errors else 'false') }}<small id="diagnostico-help">Máximo 2000 caracteres.</small><div id="diagnostico-error" class="field-error">{% for error in form.diagnostico.errors %}<span>{{ error }}</span>{% endfor %}</div></div>
+      {{ field(form.fecha_entrega_departamento, date=true) }}
+    </div>
+    <noscript><p class="module-no-script">El total se calculará al guardar. Activa JavaScript para verlo al seleccionar las fechas.</p></noscript>
+    {% include 'documents/upload.html' %}
+    <div class="form-actions"><button class="btn btn-primary" type="submit"><i class="bi bi-check2-circle" aria-hidden="true"></i> {{ 'GUARDAR MODIFICACIÓN' if record else 'GUARDAR REPOSO' }}</button><a class="btn admin-secondary" href="{{ url_for('reposo.index') }}">CANCELAR</a>{% if can('records.read') %}<a class="btn admin-secondary" href="#registros">VER REGISTROS</a>{% endif %}<a class="btn admin-secondary" href="{{ url_for('main.dashboard') }}">VOLVER AL DASHBOARD</a></div>
+  </form>
+</section>
+{% if can('records.read') %}
+<section class="admin-panel records-panel" id="registros" aria-labelledby="records-heading">
+  <div class="panel-title"><div><h2 id="records-heading">Reposos registrados</h2><p>Busca por funcionario y consulta períodos o fechas de carga.</p></div></div>
+  {{ filters_form(filters, url_for('reposo.index'), 'El rango incluye reposos que coinciden total o parcialmente con las fechas seleccionadas. Puedes ordenar por fecha desde o por fecha de creación.') }}
+  <div class="table-responsive"><table class="table admin-table reposos-table"><caption>REPOSO</caption><thead><tr><th scope="col">Nombre y Apellido</th><th scope="col">Fecha desde</th><th scope="col">Fecha hasta</th><th scope="col">Total de días</th><th scope="col">Diagnóstico</th><th scope="col">Fecha de entrega al Dpto.</th><th scope="col">Acción</th></tr></thead><tbody>
+    {% for item in records.items %}<tr><td><strong>{{ item.nombres_apellidos }}</strong>{{ owner(item) }}</td><td>{{ item.fecha_desde.strftime('%d/%m/%Y') }}</td><td>{{ item.fecha_hasta.strftime('%d/%m/%Y') }}</td><td><span class="reposo-days">{{ item.total_dias }} {{ 'día' if item.total_dias == 1 else 'días' }}</span></td><td class="reason-cell">{{ item.diagnostico }}</td><td>{{ item.fecha_entrega_departamento.strftime('%d/%m/%Y') }}</td><td><a class="record-edit" href="{{ url_for('reposo.edit', record_id=item.id) }}"><i class="bi bi-pencil-square" aria-hidden="true"></i> Editar<span class="visually-hidden"> reposo {{ item.id }}</span></a>{{ documents_link(item) }}{% if can('records.delete') %}<br><a class="record-edit" href="{{ url_for('record_lifecycle.delete', category_key='reposos', record_id=item.id) }}">Eliminar</a>{% endif %}{% if can('records.print') %}<br><a class="record-edit" href="{{ url_for('record_print.view', category_key='reposos', record_id=item.id) }}">Imprimir</a>{% endif %}</td></tr>
+    {% else %}<tr><td class="empty-records" colspan="7"><i class="bi bi-inbox" aria-hidden="true"></i>No hay reposos para mostrar con estos filtros.</td></tr>{% endfor %}
+  </tbody></table></div>{{ pagination(records, page_url) }}
+</section>
+{% endif %}
+<section class="admin-panel" aria-labelledby="reposo-heading"><div class="panel-title"><div><h2 id="reposo-heading">Gestión de cambios de guardia</h2><p>Los registros de cada categoría se consultan por separado.</p></div></div>
+<div class="reposo-grid"><a class="module-access" href="{{ url_for('guardias.normal') }}"><span class="module-access-icon"><i class="bi bi-arrow-left-right" aria-hidden="true"></i></span><span class="module-access-label">CAMBIO DE GUARDIA</span><span class="module-access-state">Solicitante (S) / Reemplazante (R)</span></a><a class="module-access" href="{{ url_for('guardias.pagada') }}"><span class="module-access-icon"><i class="bi bi-calendar2-check" aria-hidden="true"></i></span><span class="module-access-label">CAMBIO DE GUARDIA PAGADA</span><span class="module-access-state">Categoría pagada</span></a></div></section>
+{% endblock %}

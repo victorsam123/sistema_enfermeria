@@ -1,0 +1,10 @@
+{% extends 'users/base.html' %}
+{% from 'administration/macros.html' import pagination %}
+{% block subtitle %}Cuentas individuales y permisos administrativos. Las contraseñas no se muestran ni se recuperan.{% endblock %}
+{% block admin_content %}
+<div class="service-tools"><a class="btn btn-primary" href="{{ url_for('users.create') }}"><i class="bi bi-person-plus" aria-hidden="true"></i> + AGREGAR NUEVO USUARIO</a><a class="btn admin-secondary" href="{{ url_for('service_settings.history') }}">HISTORIAL ADMINISTRATIVO</a></div>
+<section class="admin-panel"><form method="get" class="record-filters">{% for input in (filters.q, filters.rol, filters.estado) %}<div class="admin-field">{{ input.label(class='form-label') }}{{ input(class='form-control') }}{% for error in input.errors %}<span class="field-error">{{ error }}</span>{% endfor %}</div>{% endfor %}<button class="btn admin-secondary" type="submit">BUSCAR</button><a href="{{ url_for('users.index') }}">Limpiar filtros</a></form>
+<div class="table-responsive"><table class="table admin-table"><thead><tr><th>Nombre y Apellido</th><th>Usuario</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>
+{% for item in rows.items %}<tr><td>{{ item.nombre }}</td><td>{{ item.username }}{% if item.protegido %}<small class="record-meta">Cuenta protegida</small>{% endif %}</td><td>{{ item.rol_nombre }}</td><td>{{ 'Activo' if item.activo else 'Inactivo' }}{% if item.debe_cambiar_password %}<small class="record-meta">Cambio de contraseña pendiente</small>{% endif %}</td><td>{% if can_manage_account(item) %}<div class="user-actions"><a href="{{ url_for('users.edit', user_id=item.id) }}">Editar</a><a href="{{ url_for('users.password', user_id=item.id) }}">Cambiar contraseña</a><a href="{{ url_for('users.state', user_id=item.id) }}">{{ 'Desactivar' if item.activo else 'Activar' }}</a></div>{% endif %}<a href="{{ url_for('users.activity', user_id=item.id) }}">Consultar actividad</a></td></tr>{% else %}<tr><td colspan="5">No hay usuarios con estos filtros.</td></tr>{% endfor %}
+</tbody></table></div>{{ pagination(rows, page_url) }}</section>
+{% endblock %}

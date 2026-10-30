@@ -1,0 +1,35 @@
+name: Pruebas
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: enfermeria
+          POSTGRES_PASSWORD: ci-only-password
+          POSTGRES_DB: enfermeria_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    env:
+      SECRET_KEY: ci-only-secret-key-with-more-than-32-characters
+      DATABASE_URL: postgresql+psycopg://enfermeria:ci-only-password@localhost:5432/enfermeria_test
+      TEST_DATABASE_URL: postgresql+psycopg://enfermeria:ci-only-password@localhost:5432/enfermeria_test
+      SESSION_COOKIE_SECURE: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: pip install -r requirements.txt
+      - run: mkdir -p .runtime
+      - run: python -m pytest -q
+      - run: node --test tests/*.test.cjs

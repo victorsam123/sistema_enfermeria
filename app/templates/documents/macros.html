@@ -1,0 +1,3 @@
+{% macro documents_link(item) -%}
+{% if can('documents.read') %}<br><a class="record-edit document-record-link" href="{{ url_for('documents.gallery', category_key=document_category(item), record_id=item.id) }}"><i class="bi bi-camera" aria-hidden="true"></i> VER DOCUMENTOS ADJUNTOS <span>({{ item.documentos_count }} {{ 'fotografía' if item.documentos_count == 1 else 'fotografías' }})</span></a>{% endif %}
+{%- endmacro %}

@@ -1,0 +1,7 @@
+{% extends 'administration/base.html' %}
+{% block subtitle %}SERVICIO: {{ service.nombre }}{% endblock %}
+{% block admin_content %}
+<div class="service-tools"><a class="btn admin-secondary" href="{{ url_for('service_files.index') }}"><i class="bi bi-arrow-left" aria-hidden="true"></i> VOLVER A ARCHIVOS POR SERVICIO</a></div>
+{% if service.codigo == 'PENDIENTE' %}<p class="notice">Estos registros anteriores no tienen una procedencia confirmada. Usa “Corregir servicio” para clasificarlos con constancia en el historial.</p>{% endif %}
+<div class="service-folder-grid">{% for key, category in categories.items() %}<article class="service-folder"><h2>{{ category.label }}</h2><p>{{ counts[key] }} registro{{ 's' if counts[key] != 1 else '' }}</p><a href="{{ url_for('service_files.records', service_id=service.id, category_key=key) }}" class="btn admin-secondary">VER REGISTROS<span class="visually-hidden"> de {{ category.label }}</span></a></article>{% endfor %}</div>
+{% endblock %}

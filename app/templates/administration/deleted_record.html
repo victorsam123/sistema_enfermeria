@@ -1,0 +1,3 @@
+{% extends 'administration/base.html' %}
+{% from 'hospital_services/macros.html' import record_table %}
+{% block admin_content %}<section class="admin-panel"><h2>{{ category.label }} #{{ record.id }}</h2><p>Servicio: {{ record.servicio.nombre }}</p><p>Eliminado el {{ record.fecha_eliminacion|fecha_local }} por el usuario ID {{ record.usuario_eliminacion_id }}.</p><p>Motivo: {{ record.motivo_eliminacion }}</p>{{ record_table(category, [record], matching_details) }}<p>Carga original: {{ record.usuario_registro.username }} · {{ record.fecha_creacion|fecha_local }}</p><a class="btn admin-secondary" href="{{ url_for('record_lifecycle.trash') }}">VOLVER A REGISTROS ELIMINADOS</a></section>{% endblock %}

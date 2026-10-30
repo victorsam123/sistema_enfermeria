@@ -1,0 +1,46 @@
+{% extends 'administration/base.html' %}
+{% from 'administration/macros.html' import field, filters_form, pagination %}
+{% from 'administration/guardia_macros.html' import detail_fields %}
+{% block extra_head %}{{ super() }}<link rel="stylesheet" href="{{ url_for('static', filename='css/guardias.css') }}"><script src="{{ url_for('static', filename='js/guardias.js') }}" defer></script>{% endblock %}
+{% block breadcrumb %}<strong>{{ page_title }}</strong>{% endblock %}
+{% block subtitle %}S = Solicitante · R = Reemplazante · Fechas y horarios independientes{% endblock %}
+{% from 'documents/macros.html' import documents_link %}
+{% from 'employees/lookup.html' import employee_lookup %}
+{% block admin_content %}
+<div class="module-back"><a href="{{ url_for('main.dashboard') }}"><i class="bi bi-arrow-left" aria-hidden="true"></i> VOLVER AL PANEL PRINCIPAL</a><span class="category-badge">{{ 'CAMBIO DE GUARDIA PAGADA' if category == 'PAGADA' else 'CAMBIO DE GUARDIA NORMAL' }}</span></div>
+<section class="admin-panel" aria-labelledby="form-heading">
+  <div class="panel-title"><span class="stat-icon blue"><i class="bi bi-arrow-left-right" aria-hidden="true"></i></span><div><h2 id="form-heading">{{ 'Editar cambio #' ~ record.id if record else 'Registrar cambio de guardia' }}</h2><p>Cada fila representa una fecha específica; las fechas no forman un período continuo.</p></div></div>
+  <form method="post" enctype="multipart/form-data" class="administrative-form" id="guardia-form">
+    {{ form.hidden_tag() }}
+    {% include 'hospital_services/service_selector.html' %}
+    {% for error in form.solicitud_id.errors %}<div class="notice error" role="alert">{{ error }}</div>{% endfor %}
+    {% for error in form.detalles.errors %}{% if error is string %}<div class="notice error" role="alert">{{ error }}</div>{% endif %}{% endfor %}
+    <div class="notice error" id="guardia-detail-error" role="alert" hidden></div>
+    <div class="guardia-participants">
+      <fieldset class="participant-section"><legend>SECCIÓN A · SOLICITANTE (S)</legend>{{ employee_lookup(form, name_field='solicitante', link_field='solicitante_funcionario_id', label='Solicitante') }}{{ field(form.solicitante) }}{{ detail_fields(form.detalles[0].form, form.detalles[0].name.rsplit('-', 1)[-1], locked=true) }}</fieldset>
+      <fieldset class="participant-section"><legend>SECCIÓN B · REEMPLAZANTE (R)</legend>{{ employee_lookup(form, name_field='reemplazante', link_field='reemplazante_funcionario_id', label='Reemplazante') }}{{ field(form.reemplazante) }}{{ detail_fields(form.detalles[1].form, form.detalles[1].name.rsplit('-', 1)[-1], locked=true) }}</fieldset>
+    </div>
+    <div class="additional-dates" id="additional-dates">{% for entry in form.detalles[2:] %}{{ detail_fields(entry.form, entry.name.rsplit('-', 1)[-1]) }}{% endfor %}</div>
+    <div class="add-date-actions"><button class="btn admin-secondary" type="button" id="add-guardia-date"><i class="bi bi-plus-lg" aria-hidden="true"></i> + AGREGAR OTRA FECHA</button><span id="guardia-date-count" role="status"></span></div>
+    <p class="guardia-form-help">Horarios de 24 horas. Un fin anterior al inicio indica finalización al día siguiente. G y L se conservan como códigos sin interpretar.</p>
+    <noscript><p class="module-no-script">Activa JavaScript para agregar más filas de fechas. Las dos secciones iniciales y la validación del servidor siguen disponibles.</p></noscript>
+    {% include 'documents/upload.html' %}
+    <div class="form-actions"><button class="btn btn-primary" type="submit"><i class="bi bi-check2-circle" aria-hidden="true"></i> {{ 'GUARDAR MODIFICACIÓN' if record else ('GUARDAR CAMBIO PAGADO' if category == 'PAGADA' else 'GUARDAR CAMBIO') }}</button><a class="btn admin-secondary" href="{{ url_for(index_endpoint) }}">CANCELAR</a>{% if can('records.read') %}<a class="btn admin-secondary" href="#registros">VER REGISTROS</a>{% endif %}</div>
+  </form>
+  <template id="guardia-date-template">{{ detail_fields(new_detail_form, '__index__') }}</template>
+</section>
+{% if can('records.read') %}
+<section class="admin-panel records-panel" id="registros" aria-labelledby="records-heading"><div class="panel-title"><div><h2 id="records-heading">{{ page_title }} · Registros</h2><p>Cada bloque corresponde a un único cambio y conserva todas sus fechas asociadas.</p></div></div>
+  {{ filters_form(filters, url_for(index_endpoint), 'cualquiera de las fechas de guardia') }}
+  <div class="table-responsive"><table class="table admin-table guardia-reference-table operation-table"><caption>{{ page_title|upper }}</caption><thead><tr><th scope="col">Cambio / Funcionarios</th><th scope="col">Fecha de guardia</th><th scope="col">Funcionario correspondiente</th><th scope="col">Código</th><th scope="col">Horario</th></tr></thead>
+    {% for item in records.items %}<tbody class="applicant-group" data-cambio-id="{{ item.id }}">
+      {% for detail in item.detalles %}<tr data-detalle-id="{{ detail.id }}">
+        {% if loop.first %}<th class="applicant-cell" scope="rowgroup" rowspan="{{ item.detalles|length }}"><span class="operation-id">CAMBIO #{{ item.id }}</span><strong><span class="participant-code">S</span>{{ item.solicitante }}</strong><strong><span class="participant-code">R</span>{{ item.reemplazante }}</strong><small class="record-meta">{{ item.servicio.nombre }}<br>{{ item.usuario_registro.username }} · {{ item.fecha_creacion|fecha_local }}{% if item.usuario_modificacion_id %}<br>Editado por {{ item.usuario_modificacion.username }} · {{ item.fecha_modificacion|fecha_local }}{% endif %}</small><a class="record-edit" href="{{ url_for(edit_endpoint, record_id=item.id) }}"><i class="bi bi-pencil-square" aria-hidden="true"></i> Editar / agregar fechas</a>{{ documents_link(item) }}{% if can('records.delete') %}<br><a class="record-edit" href="{{ url_for('record_lifecycle.delete', category_key=('pagadas' if category == 'PAGADA' else 'guardias'), record_id=item.id) }}">Eliminar</a>{% endif %}{% if can('records.print') %}<br><a class="record-edit" href="{{ url_for('record_print.view', category_key=('pagadas' if category == 'PAGADA' else 'guardias'), record_id=item.id) }}">Imprimir</a>{% endif %}</th>{% endif %}
+        <td class="change-date">{{ detail.fecha_guardia.strftime('%d/%m/%Y') }}</td><td class="participant-name"><span class="participant-code" title="{{ 'Solicitante' if detail.participante == 'S' else 'Reemplazante' }}">{{ detail.participante }}</span>{{ detail.funcionario }}</td><td class="participant-role">{{ detail.codigo or '—' }}</td><td class="schedule-cell">{{ detail.hora_inicio.strftime('%H:%M') }} a {{ detail.hora_fin.strftime('%H:%M') }}{% if detail.finaliza_dia_siguiente %}<small class="overnight-label">Finaliza el {{ detail.fecha_fin.strftime('%d/%m/%Y') }} (+1 día)</small>{% endif %}</td>
+      </tr>{% endfor %}
+    </tbody>{% else %}<tbody><tr><td class="empty-records" colspan="5"><i class="bi bi-inbox" aria-hidden="true"></i>No hay cambios para mostrar en esta categoría con estos filtros.</td></tr></tbody>{% endfor %}
+  </table></div>
+  <p class="guardia-table-legend"><span><strong>S</strong> = Solicitante</span><span><strong>R</strong> = Reemplazante</span></p>{{ pagination(records, page_url) }}
+</section>
+{% endif %}
+{% endblock %}

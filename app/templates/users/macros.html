@@ -1,0 +1,6 @@
+{% macro field(input, password=false) %}
+<div class="admin-field">{{ input.label(class='form-label') }} <span aria-hidden="true">*</span>
+{% if password %}<div class="user-password-control">{{ input(class='form-control', required=true, minlength=12, maxlength=128, autocomplete='new-password') }}<button type="button" class="btn admin-secondary" data-password-toggle="{{ input.id }}" aria-label="Mostrar contraseña" aria-pressed="false"><i class="bi bi-eye" aria-hidden="true"></i></button></div>
+{% else %}{{ input(class='form-control', required=true) }}{% endif %}
+{% for error in input.errors %}<span class="field-error" role="alert">{{ error }}</span>{% endfor %}</div>
+{% endmacro %}

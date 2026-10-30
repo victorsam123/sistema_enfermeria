@@ -1,0 +1,18 @@
+{% from 'documents/macros.html' import documents_link %}
+{% macro cell(value, field='') -%}
+{% if value is none %}{{ 'SIN COBERTURA' if field == 'fecha_cobertura' else '—' }}{% elif value.strftime is defined %}{{ value.strftime('%d/%m/%Y') }}{% else %}{{ value }}{% endif %}
+{%- endmacro %}
+
+{% macro record_table(category, rows, matching_details, start=none, end=none, actions=false, category_key='', limit=none) %}
+<div class="table-responsive"><table class="table admin-table service-table">
+<thead><tr>{% if category.kind %}<th>Cambio / participantes</th><th>Funcionario</th><th>Fecha de guardia</th><th>Código</th><th>Horario</th>{% else %}{% for key, label in category.fields %}<th>{{ label }}</th>{% endfor %}{% endif %}{% if actions %}<th>Acciones</th>{% endif %}</tr></thead><tbody>
+{% for item in rows %}
+{% if category.kind %}
+{% set details = matching_details(item, start, end) %}
+{% for detail in (details[:limit] if limit else details) %}
+<tr>{% if loop.first %}<th rowspan="{{ [details|length, limit]|min if limit else details|length }}" scope="rowgroup">CAMBIO #{{ item.id }} · {{ item.tipo_cambio }}<br>S: {{ item.solicitante }}<br>R: {{ item.reemplazante }}</th>{% endif %}<td>{{ detail.funcionario }} ({{ detail.participante }})</td><td>{{ detail.fecha_guardia.strftime('%d/%m/%Y') }}</td><td>{{ detail.codigo or '—' }}</td><td>{{ detail.hora_inicio.strftime('%H:%M') }} a {{ detail.hora_fin.strftime('%H:%M') }}{% if detail.finaliza_dia_siguiente %}<small class="record-meta">Finaliza el {{ detail.fecha_fin.strftime('%d/%m/%Y') }}</small>{% endif %}</td>{% if actions and loop.first %}<td rowspan="{{ details|length }}"><a href="{{ url_for(category.edit_endpoint, record_id=item.id) }}">Editar</a>{{ documents_link(item) }}<br><a href="{{ url_for('service_files.reclassify', category_key=category_key, record_id=item.id) }}">Corregir servicio</a><br><a href="{{ url_for('record_lifecycle.delete', category_key=category_key, record_id=item.id) }}">Eliminar</a><br><a href="{{ url_for('record_print.view', category_key=category_key, record_id=item.id) }}">Imprimir</a></td>{% endif %}</tr>
+{% endfor %}
+{% else %}<tr>{% for key, label in category.fields %}<td>{{ cell(item|attr(key), key) }}</td>{% endfor %}{% if actions %}<td><a href="{{ url_for(category.edit_endpoint, record_id=item.id) }}">Editar</a>{{ documents_link(item) }}<br><a href="{{ url_for('service_files.reclassify', category_key=category_key, record_id=item.id) }}">Corregir servicio</a><br><a href="{{ url_for('record_lifecycle.delete', category_key=category_key, record_id=item.id) }}">Eliminar</a><br><a href="{{ url_for('record_print.view', category_key=category_key, record_id=item.id) }}">Imprimir</a><small class="record-meta">#{{ item.id }} · {{ item.usuario_registro.username }}<br>{{ item.fecha_creacion|fecha_local }}</small></td>{% endif %}</tr>{% endif %}
+{% else %}<tr><td colspan="{{ 6 if category.kind else category.fields|length + (1 if actions else 0) }}" class="empty-records">Sin registros en el período seleccionado</td></tr>{% endfor %}
+</tbody></table></div>
+{% endmacro %}
