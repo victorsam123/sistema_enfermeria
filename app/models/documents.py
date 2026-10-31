@@ -5,7 +5,7 @@ from app.models import utcnow
 OWNER_CHECK = """num_nonnulls(justificativo_id,reposo_id,cambio_guardia_id,vacacion_id,comisionado_id,funcionario_id)=1 AND (
  (tipo_modulo='justificativos' AND justificativo_id=registro_id) OR
  (tipo_modulo='reposos' AND reposo_id=registro_id) OR
- (tipo_modulo IN ('guardias','pagadas') AND cambio_guardia_id=registro_id) OR
+ (tipo_modulo IN ('guardias','pagadas','reemplazos','emergencias') AND cambio_guardia_id=registro_id) OR
  (tipo_modulo='vacaciones' AND vacacion_id=registro_id) OR
  (tipo_modulo='comisionados' AND comisionado_id=registro_id) OR
  (tipo_modulo='funcionarios' AND funcionario_id=registro_id)) IS TRUE"""

@@ -7,6 +7,8 @@ from app.hospital_services.classification import apply_service, audit
 from app.models import utcnow
 from app.models.administration import CambioGuardia, DetalleCambioGuardia
 from app.administration.services import SubmissionConflict
+from app.administration.guardia_monthly import (lock_monthly, check_monthly,
+    validate_new_kind, check_duplicate)
 
 
 class DetailConflict(ValueError):
@@ -25,9 +27,16 @@ def detail_values(form):
 
 
 def create_guardia(values, details, user_id, request_id):
+    lock_monthly()
+    validate_new_kind(values, details)
     if any(d['detalle_id'] for d in details):
         raise DetailConflict('Una carga nueva no puede reutilizar identificadores de fechas guardadas.')
     first = details[0]
+    # Un reenvío idéntico debe conservar la idempotencia aunque agotó el cupo.
+    existing_id = db.session.scalar(db.select(CambioGuardia.id).where(CambioGuardia.solicitud_id == UUID(request_id)))
+    if existing_id is None:
+        check_monthly(values, first['fecha_guardia'])
+        check_duplicate(values, details)
     # Columnas anteriores: se conservan como referencia de la carga inicial.
     statement = insert(CambioGuardia).values(**values, usuario_registro_id=user_id,
         solicitud_id=UUID(request_id), fecha_cambio=first['fecha_guardia'],
@@ -62,8 +71,18 @@ def add_detail(record_id, names, detail, order):
 
 
 def update_guardia(record, names, details, version, user_id):
+    lock_monthly()
+    db.session.refresh(record)
+    if record.eliminado:
+        raise DetailConflict('El cambio fue eliminado administrativamente. Recarga la página.')
     if version != str(record.version):
         raise StaleDataError()
+    validate_new_kind(names, details, record=record)
+    # La fecha inicial histórica es inmutable y define el mes de la operación.
+    if any(getattr(record, key) != names.get(key) for key in (
+            'solicitante', 'reemplazante', 'solicitante_funcionario_id', 'reemplazante_funcionario_id')):
+        check_monthly(names, record.fecha_cambio, exclude=record.id)
+    check_duplicate(names, details, exclude=record.id)
     stored = {d.id: d for d in record.detalles}
     incoming = {d['detalle_id'] for d in details if d['detalle_id']}
     if incoming != set(stored):

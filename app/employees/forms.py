@@ -19,6 +19,20 @@ class SearchForm(FlaskForm):
             raise ValidationError(str(exc))
 
 
+class DirectorySearchForm(SearchForm):
+    # Solo el directorio admite nombres; alta/edición conservan SearchForm.
+    cedula = StringField('Buscar funcionario por cédula, nombre o apellido',
+        filters=[lambda value: ' '.join((value or '').split())], validators=[required(), Length(max=180)])
+
+    @property
+    def is_cedula(self):
+        return not any(char.isalpha() for char in (self.cedula.data or ''))
+
+    def validate_cedula(self, field):
+        if self.is_cedula:
+            super().validate_cedula(field)
+
+
 class EmployeePhotoForm(FlaskForm):
     fotografias = photos_field()
     solicitud_id = HiddenField(default=lambda: str(uuid4()), validators=[required()])

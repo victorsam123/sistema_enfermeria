@@ -10,7 +10,7 @@ from app.models.hospital_services import HistorialAdministrativo
 from app.documents.service import read_document
 from app.documents.storage import DocumentError, StorageError
 from app.security.permissions import permission_required
-from app.employees.forms import SearchForm, EmployeeForm, EmployeePhotoForm
+from app.employees.forms import SearchForm, DirectorySearchForm, EmployeeForm, EmployeePhotoForm
 from app.employees.rules import paraguay_today, completed_age, seniority, normalize_cedula
 from app.employees.services import FIELDS, create_employee, locked_employee, update_employee, replace_photo, active_photo
 from app.employees.lookup import validate_ticket, consume_lookup
@@ -22,16 +22,24 @@ bp = Blueprint('employees', __name__, url_prefix='/funcionarios')
 @bp.route('/', methods=['GET', 'POST'])
 @permission_required('employees.read')
 def search():
-    form = SearchForm()
+    form = DirectorySearchForm()
     not_found = False
+    records = []
     valid = form.validate_on_submit()
     if valid:
-        record = db.session.scalar(db.select(Funcionario.id).where(Funcionario.cedula == form.cedula.data))
-        if record is not None:
-            return redirect(url_for('employees.detail', record_id=record), code=303)
-        not_found = True
+        if form.is_cedula:
+            record = db.session.scalar(db.select(Funcionario.id).where(Funcionario.cedula == form.cedula.data))
+            if record is not None:
+                return redirect(url_for('employees.detail', record_id=record), code=303)
+            not_found = True
+        else:
+            full_name = db.func.concat_ws(' ', Funcionario.nombres, Funcionario.apellidos)
+            query = db.select(Funcionario).where(*(full_name.icontains(term, autoescape=True)
+                for term in form.cedula.data.split()))
+            records = db.session.scalars(query.order_by(Funcionario.apellidos, Funcionario.nombres, Funcionario.id)).all()
+            not_found = not records
     return render_template('employees/search.html', page_title='BÚSQUEDA DE FUNCIONARIOS',
-        form=form, not_found=not_found), 422 if request.method == 'POST' and not valid else 200
+        form=form, not_found=not_found, records=records), 422 if request.method == 'POST' and not valid else 200
 
 
 @bp.route('/nuevo', methods=['GET', 'POST'])

@@ -14,7 +14,10 @@ from app.models.employees import Funcionario
 
 SCOPES = {'justificativos': ('justificativos.index', 'justificativos.edit'),
     'reposos': ('reposo.index', 'reposo.edit'), 'guardias': ('guardias.normal', 'guardias.normal_edit'),
-    'pagadas': ('guardias.pagada', 'guardias.pagada_edit'), 'vacaciones': ('vacaciones.index', 'vacaciones.edit'),
+    'pagadas': ('guardias.pagada', 'guardias.pagada_edit'),
+    'reemplazos': ('guardias.reemplazante', 'guardias.reemplazante_edit'),
+    'emergencias': ('guardias.emergencia', 'guardias.emergencia_edit'),
+    'vacaciones': ('vacaciones.index', 'vacaciones.edit'),
     'comisionados': ('comisionados.index', 'comisionados.edit')}
 
 

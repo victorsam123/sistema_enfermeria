@@ -16,7 +16,8 @@ EMPTY = 'Sin registros en el período seleccionado'
 AUDIT_HEADERS = ['ID del registro', 'Usuario de carga', 'Fecha y hora de carga (Paraguay)',
     'Último editor', 'Última modificación (Paraguay)', 'Versión', 'DOCUMENTOS ADJUNTOS', 'Cantidad de fotografías']
 SUFFIXES = {'justificativos': 'JUST', 'reposos': 'REPOSOS', 'guardias': 'GUARDIAS',
-    'pagadas': 'PAGADAS', 'vacaciones': 'VACACIONES', 'comisionados': 'COMISIONADOS'}
+    'pagadas': 'PAGADAS', 'reemplazos': 'REEMPLAZOS', 'emergencias': 'EMERGENCIAS',
+    'vacaciones': 'VACACIONES', 'comisionados': 'COMISIONADOS'}
 
 
 def worksheet_name(label, used):

@@ -11,6 +11,7 @@ from app.administration.forms import required
 from app.hospital_services.records import CATEGORIES
 from app.hospital_services.classification import audit
 from app.security.permissions import permission_required
+from app.administration.guardia_monthly import GuardiaValidation
 
 bp = Blueprint('record_lifecycle', __name__, url_prefix='/registros')
 
@@ -97,9 +98,19 @@ def restore(category_key, record_id):
     if not form.validate_on_submit():
         abort(422)
     try:
+        from app.administration.guardia_monthly import lock_monthly, check_monthly, record_values
+        from app.models.administration import CambioGuardia
+        if CATEGORIES.get(category_key) and CATEGORIES[category_key].model is CambioGuardia:
+            lock_monthly()
         category, record = find_record(category_key, record_id, locked=True)
         if form.version.data != str(record.version) or not record.eliminado:
             raise StaleDataError()
+        if isinstance(record, CambioGuardia):
+            check_monthly(record_values(record), record.fecha_cambio, exclude=record.id)
+            from app.administration.guardia_monthly import check_duplicate
+            check_duplicate(record_values(record), [dict(participante=d.participante,
+                fecha_guardia=d.fecha_guardia, hora_inicio=d.hora_inicio, hora_fin=d.hora_fin,
+                codigo=d.codigo) for d in record.detalles], exclude=record.id)
         audit('REGISTRO_RESTAURADO', record.__tablename__, record.id,
             details={'motivo_eliminacion': record.motivo_eliminacion, 'usuario_eliminacion_id': record.usuario_eliminacion_id,
                      'fecha_eliminacion': record.fecha_eliminacion.isoformat()})
@@ -107,6 +118,10 @@ def restore(category_key, record_id):
         record.usuario_modificacion_id, record.fecha_modificacion = current_user.id, utcnow()
         db.session.commit()
         flash('Registro restaurado correctamente.', 'success')
+        return redirect(url_for('record_lifecycle.trash', categoria=category_key), code=303)
+    except GuardiaValidation as exc:
+        db.session.rollback()
+        flash(str(exc), 'error')
         return redirect(url_for('record_lifecycle.trash', categoria=category_key), code=303)
     except StaleDataError:
         db.session.rollback()

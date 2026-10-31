@@ -18,7 +18,8 @@ PARENTS = {'justificativos': 'justificativo_id', 'reposos': 'reposo_id', 'cambio
 
 
 def category_key(record):
-    return ('pagadas' if record.tipo_cambio == 'PAGADA' else 'guardias') if record.__tablename__ == 'cambios_guardia' else record.__tablename__
+    return {'NORMAL': 'guardias', 'PAGADA': 'pagadas', 'REEMPLAZO': 'reemplazos',
+            'EMERGENCIA': 'emergencias'}[record.tipo_cambio] if record.__tablename__ == 'cambios_guardia' else record.__tablename__
 
 
 def photo_count(record):

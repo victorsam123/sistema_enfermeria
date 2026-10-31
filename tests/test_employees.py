@@ -112,6 +112,49 @@ def test_unknown_cedula_and_prefilled_creation(app,accounts):
     with app.app_context(): assert db.session.scalar(db.select(db.func.count()).select_from(Funcionario))==0
 
 
+@pytest.mark.parametrize('query,expected', [
+    ('Ana María López Benítez', (0,)),
+    ('María', (0, 1)),
+    ('González', (1, 2)),
+    ('María González', (1,)),
+    ('gOnZáLeZ', (1, 2)),
+    ('LóP', (0,)),
+    ('Bení', (0,)),
+    ('del Carm', (1,)),
+    ('  María   del Carmen  González de la Cruz  ', (1,)),
+    ('Desconocido', ()),
+    ('María%', ()),
+    ('_', ()),
+])
+def test_directory_search_names_compounds_and_literal_fragments(app, accounts, query, expected):
+    client = client_for(app, accounts, 'SUPERADMIN')
+    first, _ = create_person(client)
+    second, _ = create_person(client, values={**DATA, 'cedula': '7654321',
+        'nombres': 'María del Carmen', 'apellidos': 'González de la Cruz'})
+    third, _ = create_person(client, values={**DATA, 'cedula': '7654322',
+        'nombres': 'Luis', 'apellidos': 'González'})
+    result = client.post(BASE, data=search_data(client, query))
+    # Puntuación sin letras sigue la validación anterior de cédula.
+    assert result.status_code == (422 if query == '_' else 200)
+    found = {int(value) for value in re.findall(r'href="/funcionarios/(\d+)"', result.text)}
+    ids = (first, second, third)
+    assert found == {ids[index] for index in expected}
+    if expected:
+        assert 'Funcionarios encontrados' in result.text
+        assert client.get(BASE + str(ids[expected[0]])).status_code == 200
+    elif query != '_':
+        assert 'No se encontraron funcionarios con ese nombre o apellido.' in result.text
+        assert 'name="accion" value="preparar"' not in result.text
+    with app.app_context():
+        assert db.session.scalar(db.select(db.func.count()).select_from(Funcionario)) == 3
+
+
+@pytest.mark.parametrize('value', ['0', '12..345', '1 234', '1234567890123', '１２３４', '١٢٣٤'])
+def test_directory_keeps_invalid_numeric_cedula_validation(app, accounts, value):
+    client = client_for(app, accounts, 'SUPERADMIN')
+    assert client.post(BASE, data=search_data(client, value)).status_code == 422
+
+
 def test_duplicate_normalized_cedula_and_idempotent_submission(app,accounts):
     client=client_for(app,accounts,'SUPERADMIN')
     rid,data=create_person(client,[photo()])

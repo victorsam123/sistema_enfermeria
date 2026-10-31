@@ -32,7 +32,7 @@ def test_login_logout_and_audit(app, client):
     for label in ('Justificativo', 'Reposo', 'Cambio de Guardia', 'Vacaciones', 'Comisionados'):
         assert label in page.text
     assert page.text.count('data-module=') == 0
-    for path in ('/justificativos/', '/reposo/', '/reposo/cambio-guardia/', '/vacaciones/', '/comisionados/'):
+    for path in ('/justificativos/', '/reposo/', '/reposo/cambios-guardia/', '/vacaciones/', '/comisionados/'):
         assert f'href="{path}"' in page.text
     assert 'America/Asuncion' in page.text
     assert re.search(r'id="dashboard-date"[^>]*>\d{2}/\d{2}/\d{4}</time>', page.text)

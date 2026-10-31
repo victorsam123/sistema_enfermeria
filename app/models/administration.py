@@ -53,7 +53,7 @@ class CambioGuardia(ServiceRecordMixin, db.Model):
     __mapper_args__ = {'version_id_col': version}
     __table_args__ = (
         db.CheckConstraint("(eliminado AND usuario_eliminacion_id IS NOT NULL AND fecha_eliminacion IS NOT NULL AND motivo_eliminacion IS NOT NULL AND length(trim(motivo_eliminacion)) BETWEEN 3 AND 1000) OR (NOT eliminado AND usuario_eliminacion_id IS NULL AND fecha_eliminacion IS NULL AND motivo_eliminacion IS NULL)", name='cambios_guardia_eliminacion_completa'),
-        db.CheckConstraint("tipo_cambio IN ('NORMAL', 'PAGADA')", name='cambio_tipo_valido'),
+        db.CheckConstraint("tipo_cambio IN ('NORMAL', 'PAGADA', 'REEMPLAZO', 'EMERGENCIA')", name='cambio_tipo_valido'),
         db.CheckConstraint('solicitante_funcionario_id IS NULL OR reemplazante_funcionario_id IS NULL OR solicitante_funcionario_id<>reemplazante_funcionario_id', name='guardia_fichas_distintas'),
         db.CheckConstraint("length(trim(solicitante)) BETWEEN 3 AND 180", name='cambio_solicitante_valido'),
         db.CheckConstraint("length(trim(reemplazante)) BETWEEN 3 AND 180", name='cambio_reemplazante_valido'),

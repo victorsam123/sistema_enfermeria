@@ -27,6 +27,8 @@ CATEGORIES = {
          ('fecha_entrega_departamento', 'Fecha de entrega al Dpto.')), 'reposo.edit'),
     'guardias': Category('Cambios de Guardia', CambioGuardia, 'fecha_cambio', None, (), 'guardias.normal_edit', 'NORMAL'),
     'pagadas': Category('Cambios de Guardia Pagada', CambioGuardia, 'fecha_cambio', None, (), 'guardias.pagada_edit', 'PAGADA'),
+    'reemplazos': Category('Cambios con Reemplazante', CambioGuardia, 'fecha_cambio', None, (), 'guardias.reemplazante_edit', 'REEMPLAZO'),
+    'emergencias': Category('Cambios de Emergencia', CambioGuardia, 'fecha_cambio', None, (), 'guardias.emergencia_edit', 'EMERGENCIA'),
     'vacaciones': Category('Vacaciones', Vacacion, 'fecha_inicio', 'fecha_termino',
         (('nombres_apellidos', 'Nombres y Apellidos'), ('fecha_inicio', 'Inicio'), ('fecha_termino', 'Término'),
          ('total_dias', 'Total de días')), 'vacaciones.edit'),

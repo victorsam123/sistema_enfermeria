@@ -6,7 +6,7 @@
     <div class="nav-label module-nav-label">MÓDULOS DEL SISTEMA</div>
     <a class="nav-item {{ 'active' if request.blueprint == 'justificativos' else '' }}" href="{{ url_for('justificativos.index') }}"><i class="bi bi-file-earmark-medical" aria-hidden="true"></i> Justificativo</a>
     <a class="nav-item {{ 'active' if request.blueprint == 'reposo' else '' }}" href="{{ url_for('reposo.index') }}"><i class="bi bi-heart-pulse" aria-hidden="true"></i> Reposo</a>
-    <a class="nav-item {{ 'active' if request.endpoint == 'guardias.normal' else '' }}" href="{{ url_for('guardias.normal') }}"><i class="bi bi-arrow-left-right" aria-hidden="true"></i> Cambio de Guardia</a>
+    <a class="nav-item {{ 'active' if request.endpoint == 'guardias.normal' else '' }}" href="{{ url_for('guardias.opciones') }}"><i class="bi bi-arrow-left-right" aria-hidden="true"></i> Cambio de Guardia</a>
     <a class="nav-item {{ 'active' if request.endpoint == 'guardias.pagada' else '' }}" href="{{ url_for('guardias.pagada') }}"><i class="bi bi-calendar2-check" aria-hidden="true"></i> Guardia pagada</a>
     <a class="nav-item {{ 'active' if request.blueprint == 'vacaciones' else '' }}" href="{{ url_for('vacaciones.index') }}"><i class="bi bi-calendar2-week" aria-hidden="true"></i> Vacaciones</a>
     <a class="nav-item {{ 'active' if request.blueprint == 'comisionados' else '' }}" href="{{ url_for('comisionados.index') }}"><i class="bi bi-people" aria-hidden="true"></i> Comisionados</a>

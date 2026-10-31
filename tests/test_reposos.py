@@ -54,7 +54,7 @@ def test_rest_auth_csrf_and_preserved_guardia_access(client, admin):
     assert admin.post(URL, data=DATA).status_code == 400
     html = admin.get(URL).text
     assert 'GUARDAR REPOSO' in html
-    assert 'href="/reposo/cambio-guardia/"' in html
+    assert 'href="/reposo/cambios-guardia/"' in html
     assert 'href="/reposo/cambio-guardia-pagada/"' in html
     assert 'America/Asuncion' in html and 'Cerrar sesión' in html
 

@@ -14,7 +14,7 @@ if (typeof document !== 'undefined') {
     const name = form.elements.namedItem(zone.dataset.targetName), link = form.elements.namedItem(zone.dataset.targetLink);
     const search = zone.querySelector('[data-lookup-search]');
     const clear = () => { link.value = ''; result.textContent = 'Vínculo retirado; el nombre se conserva como texto de la carga.'; };
-    zone.querySelector('[data-lookup-clear]').addEventListener('click', clear);
+    zone.querySelector('[data-lookup-clear]')?.addEventListener('click', clear);
     name.addEventListener('input', () => { if (link.value) clear(); });
     search.addEventListener('click', async () => {
       if (!input.value.trim()) { result.textContent = 'Ingresa el número de cédula.'; input.focus(); return; }
