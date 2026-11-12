@@ -1,0 +1,272 @@
+{% extends 'base.html' %}
+{% block title %}Novedades del Departamento de Enfermería{% endblock %}
+{% block body %}
+<div class="dashboard-shell" id="novedades-page" data-refresh-url="{{ url_for('novedades.api_resumen') }}">
+  {% include 'includes/sidebar.html' %}
+  <div class="workspace">
+    {% include 'includes/header.html' %}
+    <main class="dashboard-content">
+      <div class="breadcrumb-line"><span>Espacio administrativo</span><i class="bi bi-chevron-right" aria-hidden="true"></i><strong>Novedades</strong></div>
+      {% include 'includes/clock.html' %}
+      <div class="page-heading">
+        <div>
+          <p class="eyebrow">PANEL ADMINISTRATIVO</p>
+          <h1>NOVEDADES DEL DEPARTAMENTO DE ENFERMERÍA</h1>
+          <p>Cumpleaños y próximas vacaciones del personal.</p>
+        </div>
+        <a class="btn btn-secondary" href="{{ url_for('main.dashboard') }}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver al panel principal</a>
+      </div>
+
+      <div class="novedades-summary" aria-label="Indicadores resumidos de novedades">
+        <article class="summary-card">
+          <span class="summary-label">Cumpleaños hoy</span>
+          <strong>{{ snapshot.resumen.cumpleanos_hoy }}</strong>
+        </article>
+        <article class="summary-card">
+          <span class="summary-label">Próximos cumpleaños</span>
+          <strong>{{ snapshot.resumen.proximos_cumpleanos }}</strong>
+        </article>
+        <article class="summary-card">
+          <span class="summary-label">Próximas vacaciones</span>
+          <strong>{{ snapshot.resumen.vacaciones_proximas }}</strong>
+        </article>
+      </div>
+
+      <div class="novedades-grid">
+        <section class="novedades-panel" aria-labelledby="birthdays-title">
+          <div class="panel-header">
+            <span class="panel-icon"><i class="bi bi-calendar-event" aria-hidden="true"></i></span>
+            <div>
+              <p class="eyebrow">CUMPLEAÑOS</p>
+              <h2 id="birthdays-title">CUMPLEAÑOS DEL PERSONAL</h2>
+            </div>
+          </div>
+
+          <div class="subpanel">
+            <h3><i class="bi bi-gift-fill" aria-hidden="true"></i> Cumpleaños de hoy</h3>
+            {% if snapshot.cumpleanos_hoy %}
+              {% for employee in snapshot.cumpleanos_hoy %}
+                <article class="news-card birthday-card">
+                  <div class="news-title-row">
+                    <h4>{{ employee.nombre }}</h4>
+                    <span class="badge badge-positive">Cumple años hoy</span>
+                  </div>
+                  <p><strong>Servicio:</strong> {{ employee.servicio }}</p>
+                  <p><strong>Fecha:</strong> {{ employee.fecha_cumpleanos.strftime('%d/%m') }}</p>
+                  <p class="highlight-message">{{ employee.mensaje }}</p>
+                </article>
+              {% endfor %}
+            {% else %}
+              <p class="empty-message">Hoy no se registran cumpleaños del personal.</p>
+            {% endif %}
+          </div>
+
+          <div class="subpanel">
+            <h3><i class="bi bi-stars" aria-hidden="true"></i> Próximos cumpleaños</h3>
+            {% if snapshot.proximos_cumpleanos %}
+              {% for employee in snapshot.proximos_cumpleanos %}
+                <article class="news-card birthday-card">
+                  <div class="news-title-row">
+                    <h4>{{ employee.nombre }}</h4>
+                  </div>
+                  <p><strong>Servicio:</strong> {{ employee.servicio }}</p>
+                  <p><strong>Cumpleaños:</strong> {{ employee.fecha_cumpleanos.strftime('%d/%m') }}</p>
+                  <p><strong>Faltan:</strong> {{ employee.dias_restantes }} días.</p>
+                </article>
+              {% endfor %}
+            {% else %}
+              <p class="empty-message">No se registran cumpleaños para los próximos 8 días.</p>
+            {% endif %}
+          </div>
+        </section>
+
+        <section class="novedades-panel" aria-labelledby="vacations-title">
+          <div class="panel-header">
+            <span class="panel-icon"><i class="bi bi-calendar2-check" aria-hidden="true"></i></span>
+            <div>
+              <p class="eyebrow">VACACIONES</p>
+              <h2 id="vacations-title">FUNCIONARIOS PRÓXIMOS A SALIR DE VACACIONES</h2>
+            </div>
+          </div>
+
+          {% if snapshot.vacaciones_proximas %}
+            {% for vacation in snapshot.vacaciones_proximas %}
+              <article class="news-card vacation-card">
+                <div class="news-title-row">
+                  <h4>{{ vacation.nombre }}</h4>
+                  <span class="badge badge-warning">{{ vacation.mensaje }}</span>
+                </div>
+                <p><strong>Servicio:</strong> {{ vacation.servicio }}</p>
+                <p><strong>Inicio:</strong> {{ vacation.fecha_inicio.strftime('%d/%m/%Y') }}</p>
+                <p><strong>Término:</strong> {{ vacation.fecha_termino.strftime('%d/%m/%Y') }}</p>
+                <p><strong>Total de días:</strong> {{ vacation.total_dias }}</p>
+                <p><strong>Días restantes:</strong> {{ vacation.dias_restantes }}</p>
+              </article>
+            {% endfor %}
+          {% else %}
+            <p class="empty-message">No se registran vacaciones que comiencen durante los próximos 15 días.</p>
+          {% endif %}
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<style>
+  .novedades-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+    margin: 1rem 0 1.5rem;
+  }
+
+  .summary-card {
+    background: linear-gradient(135deg, #101b2a, #18293f);
+    border: 1px solid rgba(94, 161, 255, 0.28);
+    border-radius: 18px;
+    padding: 1.2rem 1.4rem;
+    box-shadow: 0 12px 30px rgba(8, 17, 31, 0.25);
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .summary-card .summary-label {
+    color: #9bb7d6;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .summary-card strong {
+    color: #edf5ff;
+    font-size: clamp(1.8rem, 2.3vw, 2.4rem);
+  }
+
+  .novedades-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  .novedades-panel {
+    background: rgba(12, 18, 29, 0.9);
+    border: 1px solid rgba(137, 180, 255, 0.18);
+    border-radius: 20px;
+    padding: 1.2rem;
+    box-shadow: 0 16px 30px rgba(6, 11, 17, 0.2);
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid rgba(146, 184, 255, 0.14);
+  }
+
+  .panel-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(80, 144, 255, 0.14);
+    color: #8dc9ff;
+    font-size: 1.5rem;
+  }
+
+  .panel-header h2 {
+    margin: 0.18rem 0 0;
+    font-size: clamp(1.1rem, 1.5vw, 1.55rem);
+    color: #edf4ff;
+  }
+
+  .subpanel {
+    margin-bottom: 1.2rem;
+  }
+
+  .subpanel h3 {
+    color: #dfeeff;
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .news-card {
+    border: 1px solid rgba(129, 175, 255, 0.16);
+    border-radius: 14px;
+    background: rgba(17, 28, 42, 0.9);
+    padding: 0.9rem 1rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .news-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.45rem;
+  }
+
+  .news-title-row h4 {
+    margin: 0;
+    font-size: 1.05rem;
+    color: #f3f8ff;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    padding: 0.28rem 0.6rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .badge-positive {
+    background: rgba(35, 196, 115, 0.15);
+    color: #76efb5;
+  }
+
+  .badge-warning {
+    background: rgba(255, 188, 88, 0.14);
+    color: #ffd281;
+  }
+
+  .news-card p {
+    margin: 0.25rem 0;
+    color: #d6e6ff;
+  }
+
+  .highlight-message {
+    color: #8ed2ff;
+    font-weight: 600;
+  }
+
+  .empty-message {
+    margin: 0;
+    padding: 0.75rem 0.9rem;
+    color: #d7e6f9;
+    background: rgba(18, 31, 48, 0.8);
+    border: 1px dashed rgba(137, 178, 255, 0.2);
+    border-radius: 12px;
+  }
+
+  @media (max-width: 900px) {
+    .novedades-summary,
+    .novedades-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+<script src="{{ url_for('static', filename='js/novedades.js') }}" defer></script>
+{% endblock %}

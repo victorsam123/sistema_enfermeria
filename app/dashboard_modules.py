@@ -20,6 +20,7 @@ DASHBOARD_MODULES = (
     DashboardModule('reposo', 'Reposo', 'bi-heart-pulse', 'reposo.index'),
     DashboardModule('cambio-guardia', 'Cambio de Guardia', 'bi-arrow-left-right', 'guardias.opciones'),
     DashboardModule('vacaciones', 'Vacaciones', 'bi-calendar2-week', 'vacaciones.index'),
+    DashboardModule('novedades', 'Novedades', 'bi-bell', 'novedades.index', 'novedades.read'),
     DashboardModule('comisionados', 'Comisionados', 'bi-people', 'comisionados.index'),
     DashboardModule('archivos-servicio', 'Archivos por Servicio', 'bi-folder2-open', 'service_files.index', 'files.read'),
     DashboardModule('informes', 'Informes Excel', 'bi-file-earmark-spreadsheet', 'reports.index', 'reports.export'),

@@ -9,6 +9,7 @@
     <a class="nav-item {{ 'active' if request.endpoint == 'guardias.normal' else '' }}" href="{{ url_for('guardias.opciones') }}"><i class="bi bi-arrow-left-right" aria-hidden="true"></i> Cambio de Guardia</a>
     <a class="nav-item {{ 'active' if request.endpoint == 'guardias.pagada' else '' }}" href="{{ url_for('guardias.pagada') }}"><i class="bi bi-calendar2-check" aria-hidden="true"></i> Guardia pagada</a>
     <a class="nav-item {{ 'active' if request.blueprint == 'vacaciones' else '' }}" href="{{ url_for('vacaciones.index') }}"><i class="bi bi-calendar2-week" aria-hidden="true"></i> Vacaciones</a>
+    {% if can('novedades.read') %}<a class="nav-item {{ 'active' if request.blueprint == 'novedades' else '' }}" href="{{ url_for('novedades.index') }}"><i class="bi bi-bell" aria-hidden="true"></i> Novedades</a>{% endif %}
     <a class="nav-item {{ 'active' if request.blueprint == 'comisionados' else '' }}" href="{{ url_for('comisionados.index') }}"><i class="bi bi-people" aria-hidden="true"></i> Comisionados</a>
     {% if can('employees.read') %}<a class="nav-item {{ 'active' if request.blueprint == 'employees' else '' }}" href="{{ url_for('employees.search') }}"><i class="bi bi-person-vcard" aria-hidden="true"></i> Funcionario</a>{% endif %}
     {% if can('files.read') %}<a class="nav-item {{ 'active' if request.blueprint == 'service_files' else '' }}" href="{{ url_for('service_files.index') }}"><i class="bi bi-folder2-open" aria-hidden="true"></i> Archivos por Servicio</a>{% endif %}

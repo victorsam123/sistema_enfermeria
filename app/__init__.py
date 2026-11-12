@@ -36,8 +36,10 @@ def create_app(test_config=None):
     from app.models import Usuario
     from app.routes.auth import bp as auth_bp
     from app.routes.main import bp as main_bp
+    from app.novedades import bp as novedades_bp
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
+    app.register_blueprint(novedades_bp)
     from app.administration import register_administration
     register_administration(app)
     from app.documents import configure_documents

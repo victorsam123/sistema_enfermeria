@@ -8,7 +8,8 @@ LOAD = frozenset({'dashboard', 'records.create', 'documents.create', 'employees.
 ADMIN = LOAD | {'records.read', 'records.edit', 'records.delete', 'records.print',
     'reports.export', 'files.read', 'diagnoses.read', 'users.manage', 'activity.read',
     'documents.read', 'documents.download', 'documents.manage', 'documents.history',
-    'employees.read', 'employees.manage', 'employees.history', 'employment.read', 'employment.manage', 'employment.history'}
+    'employees.read', 'employees.manage', 'employees.history', 'employment.read', 'employment.manage', 'employment.history',
+    'novedades.read'}
 PERMISSIONS = {'SUPERADMIN': ADMIN | {'records.restore', 'services.manage', 'configuration'},
                'JEFATURA': ADMIN, 'OPERADOR': LOAD, 'SUPERVISOR': LOAD}
 DENIED = 'No tiene permisos para realizar esta operación'
