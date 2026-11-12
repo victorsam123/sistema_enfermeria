@@ -1,4 +1,5 @@
 from datetime import date, datetime, timedelta
+from urllib.parse import quote
 import calendar
 
 from sqlalchemy.orm import selectinload
@@ -61,6 +62,7 @@ def get_birthdays(today=None):
             'nombre': employee.nombre_completo.strip(),
             'fecha_cumpleanos': next_birthday,
             'dias_restantes': days_until,
+            'whatsapp_url': _birthday_whatsapp_url(employee),
         }
         if next_birthday == today:
             record['mensaje'] = '¡Hoy está de cumpleaños!'
@@ -74,6 +76,22 @@ def get_birthdays(today=None):
     tomorrow_birthdays.sort(key=lambda item: item['nombre'])
     upcoming_birthdays.sort(key=lambda item: (item['dias_restantes'], item['nombre']))
     return today_birthdays, tomorrow_birthdays, upcoming_birthdays
+
+
+def _birthday_whatsapp_url(employee):
+    phone = ''.join(char for char in (employee.telefono or '') if char in '0123456789')
+    if not 8 <= len(phone) <= 15:
+        return None
+    message = (
+        f'Estimado/a *{employee.nombre_completo.strip()}*,\n'
+        'De parte del Dpto. de Enfermería, te enviamos nuestras más sinceras felicitaciones '
+        'por tu cumpleaños. Valoramos profundamente tu compromiso, tu ética de trabajo y tu '
+        'valiosa contribución a nuestro equipo de salud. Te deseamos un excelente día junto a '
+        'tus seres queridos y muchos éxitos en tus proyectos personales y profesionales.\n'
+        'Atentamente,\n'
+        '*Jefatura de Enfermería*'
+    )
+    return f'https://wa.me/{phone}?text={quote(message, safe="")}'
 
 
 def get_upcoming_vacations(today=None):

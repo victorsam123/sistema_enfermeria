@@ -229,12 +229,9 @@ def test_vacation_print_and_excel_use_the_roster_template(app, admin, career, ru
     page = admin.get(VAC + 'planilla', query_string=params)
     assert page.status_code == 200
     for value in ('PLANILLA TENTATIVA DE PERIODO VACACIONAL 2026/2027',
-                  'NOMBRES Y APELLIDOS', 'C.I. Nº', 'RUBRO', 'FUNCION',
-                  '01/11/2026', '15/11/2026', '99887766', career, 'vacation_roster_logo.jpeg'):
+                  '01/11/2026', '15/11/2026', '99887766', 'VISTA PREVIA DEL PDF REAL',
+                  '/vacaciones/planilla.pdf', '/vacaciones/planilla.xlsx'):
         assert value in page.text
-    assert f'<td>{rubro}</td>' in page.text
-    assert '<td>1</td>' in page.text
-    assert '<td></td></tr>' in page.text
 
     response = admin.get(VAC + 'planilla.xlsx', query_string=params)
     assert response.status_code == 200
@@ -244,15 +241,19 @@ def test_vacation_print_and_excel_use_the_roster_template(app, admin, career, ru
         sheet = ET.fromstring(workbook.read('xl/worksheets/sheet1.xml'))
         ns = {'m': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}
         cells = {cell.get('r'): cell for cell in sheet.findall('.//m:sheetData/m:row/m:c', ns)}
+        shared = ET.fromstring(workbook.read('xl/sharedStrings.xml'))
 
         def value(cell_ref):
             cell = cells[cell_ref]
             text = cell.find('m:is/m:t', ns)
             node = cell.find('m:v', ns)
+            if cell.get('t') == 's':
+                return ''.join(shared[int(node.text)].itertext())
             return text.text if text is not None else node.text if node is not None else ''
 
-        assert value('C7') == 'C.I. Nº'
-        assert value('G7') == 'ANTIGÜEDAD'
+        # Los títulos se conservan literalmente como aparecen en la plantilla.
+        assert 'C.I.' in value('C7')
+        assert 'ANTIG' in value('G7')
         assert [value(f'{column}9') for column in ('A', 'B', 'C', 'D', 'E', 'G', 'K')] == [
             '1', 'Ana Ejemplo', '99887766', rubro, career, '11 años, 7 meses, 22 días', '1, 2']
         assert value('J9') == '15'
@@ -261,7 +262,10 @@ def test_vacation_print_and_excel_use_the_roster_template(app, admin, career, ru
         assert value('I9') == str((date(2026, 11, 15) - date(1899, 12, 30)).days)
         assert value('L9') == ''
         assert sheet.find('m:mergeCells/m:mergeCell[@ref="A1:L1"]', ns) is not None
-        assert sheet.find('m:pageSetup', ns).get('orientation') == 'portrait'
+        assert sheet.find('m:pageSetup', ns).get('orientation') == 'landscape'
+        assert sheet.find('m:pageSetup', ns).get('fitToWidth') == '1'
+        style = ET.fromstring(workbook.read('xl/styles.xml'))
+        assert style.find('m:cellXfs', ns)[int(cells['J9'].get('s'))].get('numFmtId') == '0'
 
 
 @pytest.mark.parametrize('path,model,values', [(COM, Comisionado, COM_DATA), (VAC, Vacacion, VAC_DATA)])

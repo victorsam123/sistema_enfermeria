@@ -1,6 +1,19 @@
 {% extends 'base.html' %}
 {% block title %}Novedades del Departamento de Enfermería{% endblock %}
 {% block body %}
+{% macro birthday_card(employee) -%}
+  <article class="news-card birthday-card">
+    <h4>{{ employee.nombre }}</h4>
+    {% if employee.whatsapp_url %}
+      <a class="birthday-whatsapp" href="{{ employee.whatsapp_url }}" target="_blank" rel="noopener noreferrer"
+         aria-label="Enviar felicitación por WhatsApp a {{ employee.nombre }}">
+        <i class="bi bi-whatsapp" aria-hidden="true"></i> Enviar felicitación
+      </a>
+    {% else %}
+      <span class="birthday-phone-hint">Registra su teléfono en la ficha para habilitar WhatsApp.</span>
+    {% endif %}
+  </article>
+{%- endmacro %}
 <div class="dashboard-shell" id="novedades-page" data-refresh-url="{{ url_for('novedades.api_resumen') }}">
   {% include 'includes/sidebar.html' %}
   <div class="workspace">
@@ -46,9 +59,7 @@
             <h3><i class="bi bi-gift-fill" aria-hidden="true"></i> Cumpleaños de hoy</h3>
             {% if snapshot.cumpleanos_hoy %}
               {% for employee in snapshot.cumpleanos_hoy %}
-                <article class="news-card birthday-card">
-                  <h4>{{ employee.nombre }}</h4>
-                </article>
+                {{ birthday_card(employee) }}
               {% endfor %}
             {% else %}
               <p class="empty-message">Hoy no se registran cumpleaños del personal.</p>
@@ -59,9 +70,7 @@
             <h3><i class="bi bi-calendar2-heart" aria-hidden="true"></i> Mañana cumpleaños</h3>
             {% if snapshot.cumpleanos_manana %}
               {% for employee in snapshot.cumpleanos_manana %}
-                <article class="news-card birthday-card">
-                  <h4>{{ employee.nombre }}</h4>
-                </article>
+                {{ birthday_card(employee) }}
               {% endfor %}
             {% else %}
               <p class="empty-message">Mañana no se registran cumpleaños del personal.</p>
@@ -72,9 +81,7 @@
             <h3><i class="bi bi-stars" aria-hidden="true"></i> Próximos cumpleaños</h3>
             {% if snapshot.proximos_cumpleanos %}
               {% for employee in snapshot.proximos_cumpleanos %}
-                <article class="news-card birthday-card">
-                  <h4>{{ employee.nombre }}</h4>
-                </article>
+                {{ birthday_card(employee) }}
               {% endfor %}
             {% else %}
               <p class="empty-message">No se registran otros cumpleaños dentro de los próximos 8 días.</p>
@@ -206,6 +213,43 @@
     background: rgba(17, 28, 42, 0.9);
     padding: 0.9rem 1rem;
     margin-bottom: 0.8rem;
+  }
+
+  .birthday-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .birthday-card h4 {
+    margin: 0;
+    color: #f3f8ff;
+    font-size: 1.05rem;
+  }
+
+  .birthday-whatsapp {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.55rem 0.8rem;
+    border-radius: 999px;
+    background: #128c4a;
+    color: #fff;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .birthday-whatsapp:hover,
+  .birthday-whatsapp:focus-visible {
+    background: #0c713b;
+    color: #fff;
+  }
+
+  .birthday-phone-hint {
+    color: #b7c8dc;
+    font-size: 0.82rem;
   }
 
   .news-title-row {

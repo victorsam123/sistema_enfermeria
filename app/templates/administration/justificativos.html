@@ -18,6 +18,7 @@
 </section>
 {% if can('records.read') %}
 <section class="admin-panel records-panel" id="registros" aria-labelledby="records-heading">
+  {% if can('records.print') %}<div class="form-actions"><a class="btn admin-secondary" href="{{ url_for('compensatory_notes.prepare') }}">GENERAR NOTA DE DÍA COMPENSATORIO</a></div>{% endif %}
   <div class="panel-title"><div><h2 id="records-heading">Justificativos registrados</h2><p>Busca por nombre y filtra por fecha de inasistencia.</p></div></div>
   {{ filters_form(filters, url_for('justificativos.index'), 'inasistencia') }}
   <div class="table-responsive"><table class="table admin-table"><caption class="visually-hidden">Registros de justificativos</caption><thead><tr><th scope="col">Nombres y Apellidos</th><th scope="col">Fecha de inasistencia</th><th scope="col">Motivo</th><th scope="col">Fecha de cobertura</th><th scope="col">Acción</th></tr></thead><tbody>

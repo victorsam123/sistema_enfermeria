@@ -1,7 +1,8 @@
 from uuid import UUID, uuid4
+import re
 from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, HiddenField, SelectField
-from wtforms.validators import Length, ValidationError
+from wtforms.validators import Length, Optional, ValidationError
 from app.administration.forms import clean_name, required, date_field
 from app.documents.images import photos_field
 from app.employees.rules import normalize_cedula, paraguay_today
@@ -56,6 +57,9 @@ class EmployeeForm(EmployeePhotoForm):
     apellidos = StringField('Apellidos completos', filters=[clean_name], validators=[required(), Length(min=1, max=120)])
     cedula = SearchForm.cedula
     fecha_nacimiento = date_field('Fecha de nacimiento')
+    telefono = StringField('Teléfono (WhatsApp)',
+        filters=[lambda value: re.sub(r'[^0-9]', '', value or '') or None],
+        validators=[Optional(), Length(min=8, max=15)])
     direccion_actual = TextAreaField('Dirección actual', filters=[lambda v: (v or '').strip()], validators=[required(), Length(max=500)])
     fecha_ingreso = date_field('Fecha exacta de ingreso a la institución')
     carrera = SelectField('Carrera', choices=[('', 'Selecciona una carrera')] + list(CAREER_CHOICES),

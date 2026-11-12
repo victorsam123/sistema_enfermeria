@@ -9,6 +9,8 @@ import math
 import re
 import xlsxwriter
 from app.dashboard_clock import PARAGUAY_TIMEZONE
+from app.extensions import db
+from app.models.administration import CambioGuardiaCupo
 from app.hospital_services.catalog import SHEET_NAMES
 from app.hospital_services.records import CATEGORIES, matching_details
 
@@ -161,7 +163,8 @@ class ExcelReport:
             headers = ['ID del cambio', 'Solicitante (S)', 'Reemplazante (R)', 'Tipo de cambio', 'Funcionario correspondiente',
                 'Participante (S/R)', 'Fecha de guardia', 'Hora de inicio', 'Hora de finalización', 'Fecha de finalización',
                 'Código original', 'ID del detalle', 'Orden del detalle', 'Fecha original de carga de guardia',
-                'Hora de inicio original', 'Hora de finalización original'] + AUDIT_HEADERS[1:]
+                'Hora de inicio original', 'Hora de finalización original', 'Fecha de referencia del cupo',
+                'Mes de imputación del cupo', 'Uso anticipado'] + AUDIT_HEADERS[1:]
         else:
             headers = [label for _, label in category.fields] + AUDIT_HEADERS
         sheet = self.sheet(name, service, len(headers))
@@ -183,10 +186,23 @@ class ExcelReport:
         row = 7
         for index, record in enumerate(rows):
             if category.kind:
+                allocations = db.session.scalars(db.select(CambioGuardiaCupo).where(
+                    CambioGuardiaCupo.cambio_guardia_id == record.id
+                )).all()
+                allocation_by_participant = {allocation.participante: allocation for allocation in allocations}
+                written_quota_participants = set()
                 for detail in matching_details(record, self.form.desde.data, self.form.hasta.data):
+                    quota = allocation_by_participant.get(detail.participante)
+                    if quota and detail.participante not in written_quota_participants:
+                        quota_values = [quota.fecha_referencia,
+                            f'{quota.mes_imputacion:02d}/{quota.anio_imputacion}',
+                            'Sí' if quota.uso_anticipado else 'No']
+                        written_quota_participants.add(detail.participante)
+                    else:
+                        quota_values = ['', '', '']
                     values = [record.id, record.solicitante, record.reemplazante, record.tipo_cambio, detail.funcionario,
                         detail.participante, detail.fecha_guardia, detail.hora_inicio, detail.hora_fin, detail.fecha_fin,
-                        detail.codigo or '', detail.id, detail.orden, record.fecha_cambio, record.hora_inicio, record.hora_fin]
+                        detail.codigo or '', detail.id, detail.orden, record.fecha_cambio, record.hora_inicio, record.hora_fin] + quota_values
                     self.write_row(sheet, row, 0, values + self.audit_values(record)[1:], alt=index % 2 == 1)
                     row += 1
             else:

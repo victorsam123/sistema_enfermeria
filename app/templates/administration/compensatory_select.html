@@ -1,0 +1,28 @@
+{% extends 'administration/base.html' %}
+{% from 'administration/macros.html' import field %}
+{% block extra_head %}{{ super() }}<script src="{{ url_for('static', filename='js/compensatory_notes.js') }}" defer></script><script src="{{ url_for('static', filename='js/administration.js') }}" defer></script>{% endblock %}
+{% block subtitle %}Selecciona justificativos para preparar la nota institucional, sin modificar sus registros.{% endblock %}
+{% block admin_content %}
+<section class="admin-panel">
+  <h2>Seleccionar días compensatorios</h2>
+  <p>La selección requiere confirmar que se trata de servicios extraordinarios. Los demás motivos no se consideran compensatorios automáticamente. Capacitación, llegada tardía y falta de marcación de entrada están excluidos de esta nota y permanecen en Justificativos.</p>
+  <form method="get" class="record-filters">
+    <div class="admin-field">{{ filters.q.label(class='form-label') }}{{ filters.q(class='form-control', placeholder='Nombre o apellido') }}</div>
+    {{ field(filters.desde, date=true, optional=true) }}{{ field(filters.hasta, date=true, optional=true) }}
+    <div class="admin-field">{{ filters.servicio.label(class='form-label') }}{{ filters.servicio(class='form-control') }}</div>
+    <button class="btn admin-secondary" type="submit">FILTRAR</button>
+    {% for errors in filters.errors.values() %}{% for error in errors %}<p class="field-error">{{ error }}</p>{% endfor %}{% endfor %}
+  </form>
+  <form method="post" data-compensatory-selection>
+    {{ selection.csrf_token }}<input type="hidden" name="accion" value="preparar">
+    {% for errors in selection.errors.values() %}{% for error in errors %}<p class="field-error" role="alert">{{ error }}</p>{% endfor %}{% endfor %}
+    <p><label><input type="checkbox" data-select-all> Seleccionar todos los registros revisados</label> · <strong data-selection-count role="status" aria-live="polite">0 seleccionados</strong></p>
+    <div class="table-responsive"><table class="table admin-table"><thead><tr><th>Seleccionar</th><th>Funcionario</th><th>Servicio</th><th>Día libre</th><th>Cobertura trabajada</th><th>Motivo documentado</th></tr></thead><tbody>
+    {% for record in records %}<tr><td><input type="checkbox" name="registros" value="{{ record.id }}" aria-label="Seleccionar justificativo {{ record.id }}" {% if record.id in (selection.registros.data or []) or record.id == initial_id %}checked{% endif %}></td><td>{{ record.nombres_apellidos }}<small class="record-meta">Justificativo #{{ record.id }}</small></td><td>{{ record.servicio.nombre }}</td><td>{{ record.fecha_inasistencia.strftime('%d/%m/%Y') }}</td><td>{{ record.fecha_cobertura.strftime('%d/%m/%Y') if record.fecha_cobertura else 'Completar antes de generar' }}</td><td>{{ record.motivo }}{% if not positive_reason(record.motivo) %}<small class="record-meta">Requiere verificar expresamente que corresponda a una compensación por servicios extraordinarios.</small>{% endif %}</td></tr>{% else %}<tr><td colspan="6">No hay registros disponibles con estos filtros.</td></tr>{% endfor %}
+    </tbody></table></div>
+    <p>{{ selection.confirmar(required=true) }} {{ selection.confirmar.label }}</p>
+    <div class="form-actions"><button class="btn btn-primary" type="submit">PREPARAR NOTA SELECCIONADA</button><a class="btn admin-secondary" href="{{ url_for('justificativos.index') }}#registros">VOLVER A JUSTIFICATIVOS</a></div>
+  </form>
+</section>
+<section class="admin-panel"><h2>Notas emitidas</h2><p>Las descargas anteriores conservan la versión emitida, aunque posteriormente se corrija un justificativo.</p><div class="table-responsive"><table class="table admin-table"><thead><tr><th>Número / año</th><th>Emisión</th><th>Registros</th><th>Documento</th></tr></thead><tbody>{% for note in notes.items %}<tr><td>{{ note.numero }}/{{ note.anio }}</td><td>{{ note.fecha_emision.strftime('%d/%m/%Y') }}</td><td>{{ note.registros|length }}</td><td><a href="{{ url_for('compensatory_notes.issued', note_id=note.id) }}">CONSULTAR NOTA EMITIDA</a></td></tr>{% else %}<tr><td colspan="4">Todavía no se emitieron notas.</td></tr>{% endfor %}</tbody></table></div><nav aria-label="Historial de notas">{% if notes.has_prev %}<a href="{{ url_for('compensatory_notes.prepare', pagina_notas=notes.prev_num) }}">ANTERIORES</a>{% endif %} <span>Página {{ notes.page }} de {{ notes.pages or 1 }}</span> {% if notes.has_next %}<a href="{{ url_for('compensatory_notes.prepare', pagina_notas=notes.next_num) }}">SIGUIENTES</a>{% endif %}</nav></section>
+{% endblock %}

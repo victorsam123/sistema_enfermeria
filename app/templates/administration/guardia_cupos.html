@@ -1,0 +1,60 @@
+{% extends 'administration/base.html' %}
+{% block title %}{{ page_title }} · Departamento de Enfermería{% endblock %}
+{% block breadcrumb %}<strong>{{ page_title }}</strong>{% endblock %}
+{% block subtitle %}Consultas y correcciones auditadas de los cupos imputados{% endblock %}
+{% block admin_content %}
+<div class="module-back"><a href="{{ url_for('guardias.opciones') }}"><i class="bi bi-arrow-left" aria-hidden="true"></i> VOLVER A CAMBIOS DE GUARDIA</a></div>
+<section class="admin-panel" aria-labelledby="quota-summary-heading">
+  <div class="panel-title"><span class="stat-icon blue"><i class="bi bi-calendar2-check" aria-hidden="true"></i></span><div><h2 id="quota-summary-heading">Resumen de cupos imputados</h2><p>Los informes se agrupan por el mes de imputación; las fechas reales no se modifican.</p></div></div>
+  <form method="get" class="administrative-form" action="{{ url_for('guardias.cupos') }}">
+    <div class="guardia-detail-grid">
+      <label class="admin-field"><span>Año</span><input type="number" name="anio" min="1900" max="9999" value="{{ anio }}" required></label>
+      <label class="admin-field"><span>Mes</span><input type="number" name="mes" min="1" max="12" value="{{ mes }}" required></label>
+    </div>
+    <div class="form-actions"><button class="btn btn-primary" type="submit">CONSULTAR</button><a class="btn admin-secondary" href="{{ url_for('guardias.cupos_excel', anio=anio, mes=mes) }}">DESCARGAR EXCEL</a></div>
+  </form>
+
+  <h3>{{ '%02d'|format(mes) }}/{{ anio }} · Resumen por funcionario</h3>
+  {% if summary %}
+  <div class="table-responsive"><table class="table admin-table">
+    <thead><tr><th>Funcionario</th><th>Tipo de cambio</th><th>Cupo mensual</th><th>Imputados</th></tr></thead>
+    <tbody>{% for (employee_id, employee_name, kind), count in summary.items() %}
+      <tr><td>{{ employee_name }}</td><td>{{ kind }}</td><td>{{ limits[kind] }}</td><td>{{ count }}</td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% else %}
+  <p class="empty-message">No hay cambios imputados a este mes.</p>
+  {% endif %}
+</section>
+
+<section class="admin-panel records-panel" aria-labelledby="quota-detail-heading">
+  <div class="panel-title"><div><h2 id="quota-detail-heading">Detalle de imputaciones</h2><p>Fecha real, fecha de referencia y cupo consumido se conservan de forma independiente.</p></div></div>
+  {% if rows %}
+  <div class="table-responsive"><table class="table admin-table">
+    <thead><tr><th>Cambio</th><th>Funcionario</th><th>Participación</th><th>Fecha real</th><th>Mes imputado</th><th>Anticipado</th><th>Corrección administrativa</th></tr></thead>
+    <tbody>{% for allocation in rows %}
+      <tr>
+        <td>#{{ allocation.cambio_guardia_id }} · {{ allocation.tipo_cupo }}<br><small>Referencia: {{ allocation.fecha_referencia.strftime('%d/%m/%Y') }}</small></td>
+        <td>{{ allocation.funcionario_nombre }}</td>
+        <td>{{ 'Solicitante' if allocation.participante == 'S' else 'Reemplazante' }}</td>
+        <td>{{ allocation.cambio.fecha_cambio.strftime('%d/%m/%Y') }}</td>
+        <td>{{ '%02d'|format(allocation.mes_imputacion) }}/{{ allocation.anio_imputacion }}</td>
+        <td>{{ 'Sí' if allocation.uso_anticipado else 'No' }}</td>
+        <td>
+          <form method="post" action="{{ url_for('guardias.corregir_cupo', allocation_id=allocation.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="version" value="{{ allocation.version }}">
+            <label>Año <input type="number" name="anio" min="1900" max="9999" value="{{ allocation.anio_imputacion }}" required></label>
+            <label>Mes <input type="number" name="mes" min="1" max="12" value="{{ allocation.mes_imputacion }}" required></label>
+            <label>Motivo <input type="text" name="motivo" minlength="3" maxlength="1000" required></label>
+            <button class="btn admin-secondary" type="submit">CORREGIR</button>
+          </form>
+        </td>
+      </tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% else %}
+  <p class="empty-message">No hay detalle de cupos imputados para el período seleccionado.</p>
+  {% endif %}
+</section>
+{% endblock %}

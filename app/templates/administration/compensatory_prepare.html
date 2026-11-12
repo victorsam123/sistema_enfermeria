@@ -1,0 +1,35 @@
+{% extends 'administration/base.html' %}
+{% from 'administration/macros.html' import field %}
+{% block extra_head %}{{ super() }}<script src="{{ url_for('static', filename='js/administration.js') }}" defer></script>{% endblock %}
+{% block subtitle %}Revisión exclusiva de impresión. Los justificativos originales no se modifican.{% endblock %}
+{% block admin_content %}
+<section class="admin-panel"><h2>Revisar {{ form.filas|length }} registro(s)</h2>
+<p>Verifica la ficha y la cédula de cada persona. La cobertura es la fecha efectivamente trabajada; la inasistencia es el día libre. Puedes agregar fechas documentadas separadas por comas. Completa ambos horarios, sin suponer turnos. Un fin anterior al inicio corresponde al día siguiente.</p>
+<form method="post">
+  {{ form.csrf_token }}{{ form.solicitud_id }}
+  <div class="form-grid"><div class="admin-field">{{ form.numero.label(class='form-label') }}{{ form.numero(class='form-control', required=true, min=1, max=999999) }}</div>{{ field(form.fecha_emision, date=true) }}</div>
+  {% for errors in form.errors.values() %}{% for error in errors %}{% if error is string %}<p class="field-error" role="alert">{{ error }}</p>{% endif %}{% endfor %}{% endfor %}
+  {% for entry in form.filas %}{% set row = entry.form %}{% set record = records[loop.index0] if loop.index0 < records|length else none %}
+  <fieldset class="participant-section"><legend>REGISTRO {{ loop.index }} · {{ record.nombres_apellidos if record else '#' ~ row.justificativo_id.data }}</legend>
+    {{ row.justificativo_id }}{{ row.version }}
+    {% if record %}<p>{{ record.servicio.nombre }} · Justificativo #{{ record.id }} · {{ record.motivo }}</p>{% endif %}
+    <div class="form-grid">
+      <div class="admin-field">{{ row.funcionario_id.label(class='form-label') }}{{ row.funcionario_id(class='form-control', required=true) }}</div>
+      <div class="admin-field">{{ row.fecha_realizacion.label(class='form-label') }}{{ row.fecha_realizacion(class='form-control', required=true, placeholder='DD/MM/AAAA; varias fechas con comas') }}</div>
+      <div class="admin-field">{{ row.horario_cumplido.label(class='form-label') }}{{ row.horario_cumplido(class='form-control', required=true, placeholder='06:00 a 12:00') }}</div>
+      <div class="admin-field">{{ row.fecha_libre.label(class='form-label') }}{{ row.fecha_libre(class='form-control', required=true, placeholder='DD/MM/AAAA; varias fechas con comas') }}</div>
+      <div class="admin-field">{{ row.horario_libre.label(class='form-label') }}{{ row.horario_libre(class='form-control', required=true, placeholder='18:00 a 06:00') }}</div>
+    </div>
+    {% for errors in row.errors.values() %}{% for error in errors %}<p class="field-error" role="alert">{{ error }}</p>{% endfor %}{% endfor %}
+  </fieldset>{% endfor %}
+  <p>{{ form.confirmar(required=true) }} {{ form.confirmar.label }}</p>
+  <p>Vista previa y descarga preparan documentos sin reservar numeración. <strong>Emitir y archivar</strong> conserva el Word y PDF finales y reserva el número para ese año. No se permiten números duplicados.</p>
+  <div class="form-actions">
+    <button class="btn admin-secondary" type="submit" name="accion" value="vista" formtarget="_blank">VISTA PREVIA DEL PDF REAL</button>
+    <button class="btn admin-secondary" type="submit" name="accion" value="word">DESCARGAR WORD</button>
+    <button class="btn admin-secondary" type="submit" name="accion" value="pdf">DESCARGAR PDF</button>
+    <button class="btn btn-primary" type="submit" name="accion" value="emitir">EMITIR Y ARCHIVAR NOTA</button>
+    <a class="btn admin-secondary" href="{{ url_for('compensatory_notes.prepare') }}">VOLVER A SELECCIÓN</a>
+  </div>
+</form></section>
+{% endblock %}

@@ -7,8 +7,9 @@ from app.hospital_services.classification import apply_service, audit
 from app.models import utcnow
 from app.models.administration import CambioGuardia, DetalleCambioGuardia
 from app.administration.services import SubmissionConflict
-from app.administration.guardia_monthly import (lock_monthly, check_monthly,
-    validate_new_kind, check_duplicate)
+from app.administration.guardia_monthly import (lock_monthly, plan_monthly_allocations,
+    save_monthly_allocations, sync_monthly_allocations, validate_new_kind, check_duplicate,
+    require_advance_confirmation)
 
 
 class DetailConflict(ValueError):
@@ -26,7 +27,7 @@ def detail_values(form):
         codigo=entry.form.codigo.data or None) for entry in form.detalles]
 
 
-def create_guardia(values, details, user_id, request_id):
+def create_guardia(values, details, user_id, request_id, confirmed_advance=False):
     lock_monthly()
     validate_new_kind(values, details)
     if any(d['detalle_id'] for d in details):
@@ -35,7 +36,8 @@ def create_guardia(values, details, user_id, request_id):
     # Un reenvío idéntico debe conservar la idempotencia aunque agotó el cupo.
     existing_id = db.session.scalar(db.select(CambioGuardia.id).where(CambioGuardia.solicitud_id == UUID(request_id)))
     if existing_id is None:
-        check_monthly(values, first['fecha_guardia'])
+        allocations = plan_monthly_allocations(values, first['fecha_guardia'])
+        require_advance_confirmation(allocations, confirmed_advance)
         check_duplicate(values, details)
     # Columnas anteriores: se conservan como referencia de la carga inicial.
     statement = insert(CambioGuardia).values(**values, usuario_registro_id=user_id,
@@ -55,6 +57,7 @@ def create_guardia(values, details, user_id, request_id):
         attach_form(CambioGuardia, existing.id, user_id, request_id, replay=True)
         db.session.commit()
         return False
+    save_monthly_allocations(record_id, allocations, user_id)
     for order, detail in enumerate(details):
         add_detail(record_id, values, detail, order)
     audit('REGISTRO_CREADO', 'cambios_guardia', record_id, user_id=user_id)
@@ -70,7 +73,7 @@ def add_detail(record_id, names, detail, order):
         **{k: v for k, v in detail.items() if k != 'detalle_id'}))
 
 
-def update_guardia(record, names, details, version, user_id):
+def update_guardia(record, names, details, version, user_id, confirmed_advance=False):
     lock_monthly()
     db.session.refresh(record)
     if record.eliminado:
@@ -79,9 +82,6 @@ def update_guardia(record, names, details, version, user_id):
         raise StaleDataError()
     validate_new_kind(names, details, record=record)
     # La fecha inicial histórica es inmutable y define el mes de la operación.
-    if any(getattr(record, key) != names.get(key) for key in (
-            'solicitante', 'reemplazante', 'solicitante_funcionario_id', 'reemplazante_funcionario_id')):
-        check_monthly(names, record.fecha_cambio, exclude=record.id)
     check_duplicate(names, details, exclude=record.id)
     stored = {d.id: d for d in record.detalles}
     incoming = {d['detalle_id'] for d in details if d['detalle_id']}
@@ -94,6 +94,7 @@ def update_guardia(record, names, details, version, user_id):
     apply_service(record, names['servicio_id'], user_id)
     for key, value in names.items():
         setattr(record, key, value)
+    sync_monthly_allocations(record, names, user_id, confirmed_advance=confirmed_advance)
     record.usuario_modificacion_id = user_id
     record.fecha_modificacion = utcnow()
     next_order = max((d.orden for d in record.detalles), default=-1) + 1

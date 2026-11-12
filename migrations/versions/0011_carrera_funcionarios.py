@@ -13,6 +13,11 @@ depends_on = None
 
 
 def upgrade():
+    # La migración de vínculos puede haber encolado controles diferidos sobre
+    # funcionarios. Validarlos antes del ALTER permite actualizar desde 0009
+    # en una sola transacción, sin desactivar sus protecciones.
+    op.execute('SET CONSTRAINTS ALL IMMEDIATE')
+    op.execute('SET CONSTRAINTS ALL DEFERRED')
     op.add_column('funcionarios', sa.Column('carrera', sa.String(length=80), nullable=True))
     op.create_check_constraint('funcionario_carrera_valida', 'funcionarios',
         "carrera IS NULL OR carrera IN ('LIC. EN ENFERMERIA','TEC. EN ENFERMERIA','AUX. EN ENFERMERA','CAMILLERO')")

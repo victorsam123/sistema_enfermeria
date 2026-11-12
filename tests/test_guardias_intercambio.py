@@ -66,8 +66,11 @@ def details(day='31/10/2026', other='30/10/2026', start='06:00', end='12:00'):
             ('R', 'L', other, '12:00', '18:00'), ('S', 'G', other, '12:00', '18:00')]]
 
 
-def submit(admin, people, rows=None, path=PATH, first=0, second=1):
-    return admin.post(path, data=form_data(admin, path, names(people, first, second), rows or details()))
+def submit(admin, people, rows=None, path=PATH, first=0, second=1, confirmed_advance=False):
+    data = form_data(admin, path, names(people, first, second), rows or details())
+    if confirmed_advance:
+        data['confirmar_cupo_anticipado'] = '1'
+    return admin.post(path, data=data)
 
 
 def test_options_and_atomic_exchange_persist(app, admin, people):
@@ -94,7 +97,9 @@ def test_independent_limits_and_both_participants(app, admin, people):
     assert submit(admin, people).status_code == 303
     assert submit(admin, people, details('24/10/2026', '23/10/2026')).status_code == 303
     result = submit(admin, people, details('17/10/2026', '16/10/2026'), first=2, second=1)
-    assert result.status_code == 422 and people[1][1] in result.text and 'límite mensual' in result.text
+    assert result.status_code == 409 and people[1][1] in result.text and 'noviembre de 2026' in result.text
+    assert submit(admin, people, details('17/10/2026', '16/10/2026'),
+        first=2, second=1, confirmed_advance=True).status_code == 303
     assert submit(admin, people, path=PAID, rows=details()[:2]).status_code == 303
     assert submit(admin, people, path=PAID, rows=details('24/10/2026')[:2]).status_code == 422
     assert submit(admin, people, path=EMERGENCY, rows=details()[:2]).status_code == 303
@@ -180,10 +185,11 @@ def test_delete_releases_quota_restore_rechecks(app, admin, people):
         assert db.session.get(CambioGuardia, rid).eliminado
 
 
-def test_paid_legacy_manual_names_count_without_rewriting(app, admin, people):
-    values = dict(solicitante='  MANUAL   Ejemplo ', reemplazante='Otro Manual')
+def test_paid_requires_employee_and_enforces_individual_limit(app, admin, people):
+    values = dict(solicitante=people[0][1], reemplazante='Otro Manual')
+    assert admin.post(PAID, data=form_data(admin, PAID, values, details()[:2])).status_code == 422
+    values['solicitante_funcionario_id'] = str(people[0][0])
     assert admin.post(PAID, data=form_data(admin, PAID, values, details()[:2])).status_code == 303
-    values['solicitante'] = 'manual ejemplo'
     assert admin.post(PAID, data=form_data(admin, PAID, values, details('24/10/2026')[:2])).status_code == 422
 
 
@@ -198,7 +204,7 @@ def test_concurrent_different_submissions_cannot_exceed_limit(app, admin, people
             for role in ('solicitante', 'reemplazante'):
                 values[role + '_funcionario_id'] = int(values[role + '_funcionario_id'])
             rows = [dict(detalle_id=None, participante=r['participante'], codigo=r['codigo'],
-                fecha_guardia=date(2026, 10, 17 + index) if i < 2 else date(2026, 10, 16 + index),
+                fecha_guardia=date(2026, 10, 13 + index) if i < 2 else date(2026, 10, 12 + index),
                 hora_inicio=time(6) if i < 2 else time(12), hora_fin=time(12) if i < 2 else time(18))
                 for i, r in enumerate(details())]
             barrier.wait(timeout=10)
@@ -292,7 +298,7 @@ def test_migration12_preserves_all_existing_rows_and_constraints(app):
         tables = ['usuarios', 'cambios_guardia', 'detalles_cambio_guardia', 'historial_administrativo', 'documentos_adjuntos']
         previous = {table: db.session.execute(db.text('SELECT * FROM ' + table + ' ORDER BY id')).all() for table in tables}
         db.session.remove()
-        upgrade()
+        upgrade(revision='0012_guardias_intercambio')
         for table, original in previous.items():
             assert db.session.execute(db.text('SELECT * FROM ' + table + ' ORDER BY id')).all() == original
         assert db.session.scalar(db.text('SELECT version_num FROM alembic_version')) == '0012_guardias_intercambio'

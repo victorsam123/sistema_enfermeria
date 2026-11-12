@@ -12,6 +12,7 @@ class Funcionario(db.Model):
     carrera = db.Column(db.String(80))
     fecha_nacimiento = db.Column(db.Date, nullable=False)
     fecha_ingreso = db.Column(db.Date, nullable=False)
+    telefono = db.Column(db.String(15))
     cantidad_vinculos = db.Column(db.Integer, nullable=False, server_default='0')
     cantidad_vinculos_declarada = db.Column(db.Integer)
     direccion_actual = db.Column(db.String(500), nullable=False)
@@ -36,6 +37,7 @@ class Funcionario(db.Model):
         db.CheckConstraint('cantidad_vinculos>=0', name='funcionario_vinculos_no_negativos'),
         db.CheckConstraint('cantidad_vinculos_declarada IS NULL OR cantidad_vinculos_declarada>=0', name='funcionario_declaracion_historica_valida'),
         db.CheckConstraint('fecha_ingreso>=fecha_nacimiento', name='funcionario_fechas_coherentes'),
+        db.CheckConstraint("telefono IS NULL OR telefono ~ '^[0-9]{8,15}$'", name='funcionario_telefono_valido'),
         db.CheckConstraint("length(trim(nombres))>0 AND length(trim(apellidos))>0 AND length(nombres || ' ' || apellidos)<=180 AND length(trim(direccion_actual))>0", name='funcionario_datos_completos'),
     )
 

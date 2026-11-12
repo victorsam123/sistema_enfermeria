@@ -10,6 +10,7 @@
     <a class="btn admin-secondary" href="{{ url_for('guardias.emergencia') }}">CAMBIO DE GUARDIA DE EMERGENCIA</a>
   </div>
   <p><a href="{{ url_for('guardias.normal') }}">Consultar y conservar cargas normales anteriores</a></p>
+  {% if can('records.edit') %}<p><a href="{{ url_for('guardias.cupos') }}">Consultar control administrativo de cupos</a></p>{% endif %}
   <a href="{{ url_for('main.dashboard') }}">VOLVER AL PANEL PRINCIPAL</a>
 </section>
 {% endblock %}

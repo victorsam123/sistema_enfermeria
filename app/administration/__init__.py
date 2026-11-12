@@ -7,6 +7,7 @@ def register_administration(app):
     # Importar los modelos permite a Alembic detectar sus metadatos.
     from app.models.administration import Justificativo, CambioGuardia
     from app.models.leave_records import Comisionado, Vacacion
+    from app.models.issued_notes import NotaCompensatoria
     from app.administration.justificativos import bp as justificativos_bp
     from app.administration.reposo import bp as reposo_bp
     from app.administration.guardias import bp as guardias_bp
@@ -18,8 +19,9 @@ def register_administration(app):
     from app.security.users import bp as users_bp
     from app.administration.record_lifecycle import bp as lifecycle_bp
     from app.administration.record_print import bp as print_bp
+    from app.administration.compensatory_notes import bp as notes_bp
     blueprints = (justificativos_bp, reposo_bp, guardias_bp, comisionados_bp, vacaciones_bp,
-                  folders_bp, settings_bp, reports_bp, users_bp, lifecycle_bp, print_bp)
+                  folders_bp, settings_bp, reports_bp, users_bp, lifecycle_bp, print_bp, notes_bp)
     for blueprint in blueprints:
         app.register_blueprint(blueprint)
 

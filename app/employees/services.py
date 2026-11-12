@@ -9,7 +9,8 @@ from app.hospital_services.classification import audit, apply_service
 from app.documents.service import attach
 from app.documents.storage import DocumentError
 
-FIELDS = ('nombres', 'apellidos', 'cedula', 'carrera', 'fecha_nacimiento', 'direccion_actual', 'servicio_id')
+FIELDS = ('nombres', 'apellidos', 'cedula', 'carrera', 'fecha_nacimiento', 'telefono',
+    'direccion_actual', 'servicio_id')
 
 
 def active_photo(record):

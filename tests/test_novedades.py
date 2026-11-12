@@ -1,5 +1,9 @@
 from datetime import date, timedelta
+from html import unescape
+from urllib.parse import parse_qs, urlsplit
 from uuid import uuid4
+import re
+from types import SimpleNamespace
 
 from app.extensions import db
 from app.models import Usuario
@@ -7,9 +11,21 @@ from app.models.employees import Funcionario
 from app.models.hospital_services import Servicio
 from app.models.leave_records import Vacacion
 from tests.test_auth import login
+from app.novedades.services import _birthday_whatsapp_url
 
 
-def _create_employee(app, *, names, surname, birth_date, service, user_id):
+def test_birthday_whatsapp_link_uses_phone_and_personalized_message():
+    employee = SimpleNamespace(telefono='(+595) 981-234-567', nombre_completo='Ana Benítez')
+    link = _birthday_whatsapp_url(employee)
+    parsed = urlsplit(link)
+    assert parsed.netloc == 'wa.me' and parsed.path == '/595981234567'
+    message = parse_qs(parsed.query)['text'][0]
+    assert message.startswith('Estimado/a *Ana Benítez*,\n')
+    assert message.endswith('Atentamente,\n*Jefatura de Enfermería*')
+    assert _birthday_whatsapp_url(SimpleNamespace(telefono=None, nombre_completo='Ana Benítez')) is None
+
+
+def _create_employee(app, *, names, surname, birth_date, service, user_id, telephone=None):
     employee = Funcionario(
         nombres=names,
         apellidos=surname,
@@ -17,6 +33,7 @@ def _create_employee(app, *, names, surname, birth_date, service, user_id):
         carrera='LIC. EN ENFERMERIA',
         fecha_nacimiento=birth_date,
         fecha_ingreso=max(birth_date, date(2020, 1, 1)),
+        telefono=telephone,
         cantidad_vinculos=1,
         direccion_actual='Calle principal 123',
         servicio_id=service.id,
@@ -54,7 +71,7 @@ def test_novedades_page_for_admin_and_permissions(app, client):
         upcoming_birthday = date(1980, upcoming_day.month, upcoming_day.day)
         far_day = today + timedelta(days=12)
         far_birthday = date(1980, far_day.month, far_day.day)
-        employee_today = _create_employee(app, names='María', surname='González', birth_date=today_birthday, service=service, user_id=jefe.id)
+        employee_today = _create_employee(app, names='María', surname='González', birth_date=today_birthday, service=service, user_id=jefe.id, telephone='595981234567')
         employee_tomorrow = _create_employee(app, names='Ana', surname='Benítez', birth_date=tomorrow_birthday, service=service, user_id=jefe.id)
         employee_upcoming = _create_employee(app, names='Juan', surname='Pérez', birth_date=upcoming_birthday, service=service_two, user_id=jefe.id)
         employee_far = _create_employee(app, names='Elena', surname='Ramírez', birth_date=far_birthday, service=service, user_id=jefe.id)
@@ -79,9 +96,27 @@ def test_novedades_page_for_admin_and_permissions(app, client):
     assert login(client).status_code == 302
     page = client.get('/novedades/')
     assert page.status_code == 200
+    dashboard = client.get('/')
+    assert dashboard.status_code == 200
+    assert 'Acceso directo a Novedades' in dashboard.text
+    assert 'href="/novedades/"' in dashboard.text
     assert 'NOVEDADES DEL DEPARTAMENTO DE ENFERMERÍA' in page.text
     assert 'Cumpleaños del personal' in page.text
     assert 'María' in page.text
+    assert 'https://wa.me/595981234567?text=' in page.text
+    assert 'Enviar felicitación' in page.text
+    wa_link = re.search(r'href="(https://wa\.me/[^"]+)"', page.text)
+    assert wa_link
+    message = parse_qs(urlsplit(unescape(wa_link.group(1))).query)['text'][0]
+    assert message == (
+        'Estimado/a *María González*,\n'
+        'De parte del Dpto. de Enfermería, te enviamos nuestras más sinceras felicitaciones '
+        'por tu cumpleaños. Valoramos profundamente tu compromiso, tu ética de trabajo y tu '
+        'valiosa contribución a nuestro equipo de salud. Te deseamos un excelente día junto a '
+        'tus seres queridos y muchos éxitos en tus proyectos personales y profesionales.\n'
+        'Atentamente,\n'
+        '*Jefatura de Enfermería*'
+    )
     assert 'Mañana cumpleaños' in page.text
     assert page.text.count('Ana Benítez') == 1
     assert 'Juan' in page.text
@@ -90,4 +125,5 @@ def test_novedades_page_for_admin_and_permissions(app, client):
     assert 'Hoy no se registran cumpleaños del personal' not in page.text
 
     assert login(client, 'operador_test', 'clave-operador-test').status_code == 302
+    assert 'Acceso directo a Novedades' not in client.get('/').text
     assert client.get('/novedades/').status_code == 403

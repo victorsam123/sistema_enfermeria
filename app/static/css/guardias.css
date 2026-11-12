@@ -2,3 +2,4 @@
 @media(max-width:1200px){.additional-dates .guardia-detail-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:900px){.guardia-participants{grid-template-columns:1fr}}
 @media(max-width:420px){.guardia-detail-grid,.additional-dates .guardia-detail-grid{grid-template-columns:1fr}.participant-section{padding:17px}.additional-dates>.guardia-date-row{padding:17px}}
+.guardia-quota-confirmation{max-width:min(520px,calc(100vw - 32px));border:1px solid #41648a;border-radius:14px;padding:24px;background:#142135;color:#e7edf7;box-shadow:0 20px 70px #0009}.guardia-quota-confirmation::backdrop{background:#050a12b8}.guardia-quota-confirmation h3{margin:0 0 12px;color:#b8dcff}.guardia-quota-confirmation p{line-height:1.6;color:#d4e4f7}

@@ -98,7 +98,7 @@ def restore(category_key, record_id):
     if not form.validate_on_submit():
         abort(422)
     try:
-        from app.administration.guardia_monthly import lock_monthly, check_monthly, record_values
+        from app.administration.guardia_monthly import lock_monthly, check_restored_allocations, record_values
         from app.models.administration import CambioGuardia
         if CATEGORIES.get(category_key) and CATEGORIES[category_key].model is CambioGuardia:
             lock_monthly()
@@ -106,7 +106,7 @@ def restore(category_key, record_id):
         if form.version.data != str(record.version) or not record.eliminado:
             raise StaleDataError()
         if isinstance(record, CambioGuardia):
-            check_monthly(record_values(record), record.fecha_cambio, exclude=record.id)
+            check_restored_allocations(record)
             from app.administration.guardia_monthly import check_duplicate
             check_duplicate(record_values(record), [dict(participante=d.participante,
                 fecha_guardia=d.fecha_guardia, hora_inicio=d.hora_inicio, hora_fin=d.hora_fin,

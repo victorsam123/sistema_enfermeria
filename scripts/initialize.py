@@ -27,6 +27,9 @@ with app.app_context():
         from scripts.migrar_actualizacion10 import main as migrate_employees_with_backup
         migrate_employees_with_backup()
         revision = '0009_funcionarios'
+    if revision == '0012_guardias_intercambio':
+        from scripts.migrar_actualizacion13 import main as migrate_notes_with_backup
+        migrate_notes_with_backup()
     if revision == '0009_funcionarios':
         from scripts.migrar_actualizacion11 import main as migrate_employment_with_backup
         migrate_employment_with_backup()

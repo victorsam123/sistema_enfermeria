@@ -100,6 +100,20 @@ def test_create_search_full_profile_and_audit(app, accounts, role):
     assert history.status_code==200 and 'FUNCIONARIO_CREADO' in history.text
 
 
+def test_employee_phone_is_optional_and_saved_for_whatsapp(app, accounts):
+    client = client_for(app, accounts, 'SUPERADMIN')
+    employee_id, _ = create_person(client, values={**DATA, 'telefono': '+595 981-234-567'})
+    with app.app_context():
+        record = db.session.get(Funcionario, employee_id)
+        assert record.telefono == '595981234567'
+    profile = client.get(BASE + str(employee_id))
+    assert profile.status_code == 200 and '<dd>595981234567</dd>' in profile.text
+
+    optional_id, _ = create_person(client, values={**DATA, 'cedula': '7654999', 'telefono': ''})
+    with app.app_context():
+        assert db.session.get(Funcionario, optional_id).telefono is None
+
+
 def test_unknown_cedula_and_prefilled_creation(app,accounts):
     client=client_for(app,accounts,'SUPERADMIN')
     response=client.post(BASE,data=search_data(client,'7.654.321'))

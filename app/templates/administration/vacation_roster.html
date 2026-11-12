@@ -1,39 +1,27 @@
 {% extends 'administration/base.html' %}
-{% block extra_head %}{{ super() }}<link rel="stylesheet" href="{{ url_for('static', filename='css/vacation_roster.css') }}">{% endblock %}
+{% from 'administration/macros.html' import field %}
+{% block extra_head %}{{ super() }}<script src="{{ url_for('static', filename='js/administration.js') }}" defer></script><script src="{{ url_for('static', filename='js/compensatory_notes.js') }}" defer></script>{% endblock %}
 {% block admin_content %}
-<section class="vacation-roster">
-  <div class="roster-brand"><img src="{{ url_for('static', filename='images/vacation_roster_logo.jpeg') }}" alt="Ministerio de Salud Pública y Bienestar Social del Paraguay"></div>
-  <h2>PLANILLA TENTATIVA DE PERIODO VACACIONAL 2026/2027</h2>
-  <table class="roster-table">
-    <caption class="visually-hidden">Planilla tentativa de período vacacional 2026/2027</caption>
-    <colgroup><col><col><col><col><col><col><col><col><col><col><col><col></colgroup>
-    <thead>
-      <tr>
-        <th rowspan="2">ORDEN</th><th rowspan="2">NOMBRES Y APELLIDOS</th><th rowspan="2">C.I. Nº</th>
-        <th rowspan="2">RUBRO</th><th rowspan="2">FUNCION</th><th rowspan="2">FECHA DE INGRESO</th>
-        <th rowspan="2">ANTIGÜEDAD</th><th colspan="2">FECHA</th><th rowspan="2">TOTAL DE DIAS</th>
-        <th rowspan="2">VINCULO</th><th rowspan="2">OBSERVACION</th>
-      </tr>
-      <tr><th>DESDE</th><th>HASTA</th></tr>
-    </thead>
-    <tbody>
-      {% for row in rows %}
-      <tr><td>{{ row.order }}</td><td>{{ row.name }}</td><td>{{ row.cedula }}</td><td>{{ row.rubro }}</td>
-        <td>{{ row.career }}</td><td>{{ row.entry.strftime('%d/%m/%Y') if row.entry else '' }}</td>
-        <td>{{ row.seniority }}</td><td>{{ row.start.strftime('%d/%m/%Y') }}</td>
-        <td>{{ row.end.strftime('%d/%m/%Y') }}</td><td>{{ row.days }}</td><td>{{ row.links }}</td><td>{{ row.observation }}</td></tr>
-      {% endfor %}
-      {% for empty_row in range([25 - rows|length, 0]|max) %}
-      <tr class="empty-row">{% for column in range(12) %}<td>&nbsp;</td>{% endfor %}</tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% if missing_career_count %}<p class="roster-notice">{{ missing_career_count }} ficha(s) no tienen carrera registrada; sus campos Rubro y Función quedan vacíos. Completa la carrera en la ficha para incluirla.</p>{% endif %}
-  {% if unlinked_count %}<p class="roster-notice">{{ unlinked_count }} registro(s) histórico(s) no tienen ficha vinculada; los datos personales que faltan quedan vacíos.</p>{% endif %}
-  <div class="form-actions print-tools">
-    <button class="btn btn-primary" type="button" onclick="window.print()">IMPRIMIR PLANILLA</button>
-    <a class="btn admin-secondary" href="{{ url_for('vacaciones.planilla_excel', **request.args.to_dict()) }}">DESCARGAR EXCEL</a>
-    <a class="btn admin-secondary" href="{{ url_for('vacaciones.index', **request.args.to_dict()) }}#registros">VOLVER A VACACIONES</a>
+<section class="admin-panel"><h2>PLANILLA TENTATIVA DE PERIODO VACACIONAL 2026/2027</h2>
+<p>Selecciona el servicio y los registros que deseas incluir. El Excel conserva la plantilla institucional; la vista previa abre el PDF producido desde ese mismo archivo, en A4 horizontal y con todas las columnas.</p>
+<form method="get" class="record-filters">
+  {{ field(filters.desde, date=true) }}{{ field(filters.hasta, date=true) }}
+  <div class="admin-field">{{ filters.servicio.label(class='form-label') }}{{ filters.servicio(class='form-control') }}</div>
+  <div class="admin-field">{{ filters.q.label(class='form-label') }}{{ filters.q(class='form-control', placeholder='Nombre o apellido') }}</div>
+  <button class="btn admin-secondary" type="submit">FILTRAR REGISTROS</button>
+</form>
+{% if missing_career_count %}<p class="notice">{{ missing_career_count }} ficha(s) sin carrera: Rubro y Función quedarán vacíos, sin inventar datos.</p>{% endif %}
+{% if unlinked_count %}<p class="notice">{{ unlinked_count }} registro(s) histórico(s) sin ficha vinculada: sus datos personales faltantes quedarán vacíos.</p>{% endif %}
+<form method="get" data-compensatory-selection>
+  <input type="hidden" name="desde" value="{{ filters.desde.data.strftime('%d/%m/%Y') }}"><input type="hidden" name="hasta" value="{{ filters.hasta.data.strftime('%d/%m/%Y') }}"><input type="hidden" name="servicio" value="{{ filters.servicio.data or 0 }}"><input type="hidden" name="q" value="{{ filters.q.data or '' }}"><input type="hidden" name="orden" value="{{ filters.orden.data }}"><input type="hidden" name="seleccion" value="1">
+  <p><label><input type="checkbox" data-select-all checked> Seleccionar todos</label> · <strong data-selection-count role="status" aria-live="polite">{{ records|length }} seleccionados</strong></p>
+  <p>Los datos siguientes sirven para revisar la selección. La presentación oficial se consulta mediante <strong>Vista previa del PDF real</strong>.</p>
+  <div class="table-responsive"><table class="table admin-table"><thead><tr><th>Incluir</th><th>Funcionario</th><th>Cédula</th><th>Servicio</th><th>Desde</th><th>Hasta</th><th>Días</th></tr></thead><tbody>{% for record in records %}{% set row = rows[loop.index0] %}<tr><td><input type="checkbox" name="registros" value="{{ record.id }}" aria-label="Incluir vacaciones {{ record.id }}" checked></td><td>{{ row.name }}</td><td>{{ row.cedula }}</td><td>{{ record.servicio.nombre }}</td><td>{{ row.start.strftime('%d/%m/%Y') }}</td><td>{{ row.end.strftime('%d/%m/%Y') }}</td><td>{{ row.days }}</td></tr>{% else %}<tr><td colspan="7">No hay vacaciones en este período y servicio.</td></tr>{% endfor %}</tbody></table></div>
+  <div class="form-actions">
+    <button class="btn admin-secondary" type="submit" formaction="{{ url_for('vacaciones.planilla_pdf') }}" formtarget="_blank">VISTA PREVIA DEL PDF REAL</button>
+    <button class="btn admin-secondary" type="submit" formaction="{{ url_for('vacaciones.planilla_excel') }}">DESCARGAR EXCEL</button>
+    <button class="btn btn-primary" type="submit" formaction="{{ url_for('vacaciones.planilla_pdf') }}" name="descargar" value="1">DESCARGAR PDF / IMPRIMIR</button>
+    <a class="btn admin-secondary" href="{{ url_for('vacaciones.index') }}#registros">VOLVER A VACACIONES</a>
   </div>
-</section>
+</form></section>
 {% endblock %}
