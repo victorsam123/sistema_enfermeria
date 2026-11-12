@@ -48,14 +48,17 @@ def test_novedades_page_for_admin_and_permissions(app, client):
 
         today = date.today()
         today_birthday = date(1980, today.month, today.day)
+        tomorrow_day = today + timedelta(days=1)
+        tomorrow_birthday = date(1980, tomorrow_day.month, tomorrow_day.day)
         upcoming_day = today + timedelta(days=5)
         upcoming_birthday = date(1980, upcoming_day.month, upcoming_day.day)
         far_day = today + timedelta(days=12)
         far_birthday = date(1980, far_day.month, far_day.day)
         employee_today = _create_employee(app, names='María', surname='González', birth_date=today_birthday, service=service, user_id=jefe.id)
+        employee_tomorrow = _create_employee(app, names='Ana', surname='Benítez', birth_date=tomorrow_birthday, service=service, user_id=jefe.id)
         employee_upcoming = _create_employee(app, names='Juan', surname='Pérez', birth_date=upcoming_birthday, service=service_two, user_id=jefe.id)
         employee_far = _create_employee(app, names='Elena', surname='Ramírez', birth_date=far_birthday, service=service, user_id=jefe.id)
-        db.session.add_all([employee_today, employee_upcoming, employee_far])
+        db.session.add_all([employee_today, employee_tomorrow, employee_upcoming, employee_far])
         db.session.commit()
 
         holiday = Vacacion(
@@ -79,8 +82,11 @@ def test_novedades_page_for_admin_and_permissions(app, client):
     assert 'NOVEDADES DEL DEPARTAMENTO DE ENFERMERÍA' in page.text
     assert 'Cumpleaños del personal' in page.text
     assert 'María' in page.text
+    assert 'Mañana cumpleaños' in page.text
+    assert page.text.count('Ana Benítez') == 1
     assert 'Juan' in page.text
     assert 'Pedro Martínez' in page.text
+    assert 'Servicio:</strong> Neonatología' not in page.text
     assert 'Hoy no se registran cumpleaños del personal' not in page.text
 
     assert login(client, 'operador_test', 'clave-operador-test').status_code == 302

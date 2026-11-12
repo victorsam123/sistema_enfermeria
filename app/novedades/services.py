@@ -33,12 +33,6 @@ def _next_birthday(funcionario, today):
     return annual_birthday
 
 
-def _service_name_for_employee(funcionario):
-    if funcionario and funcionario.servicio:
-        return funcionario.servicio.nombre
-    return 'Servicio no informado'
-
-
 def _service_name_for_vacation(vacacion):
     if vacacion.funcionario and vacacion.funcionario.servicio:
         return vacacion.funcionario.servicio.nombre
@@ -50,29 +44,36 @@ def _service_name_for_vacation(vacacion):
 def get_birthdays(today=None):
     today = _as_paraguay_date(today)
     today_birthdays = []
+    tomorrow_birthdays = []
     upcoming_birthdays = []
+    seen_employee_ids = set()
     employees = db.session.scalars(
         db.select(Funcionario).order_by(Funcionario.apellidos, Funcionario.nombres)
     ).all()
     for employee in employees:
+        if employee.id in seen_employee_ids:
+            continue
+        seen_employee_ids.add(employee.id)
         next_birthday = _next_birthday(employee, today)
         days_until = (next_birthday - today).days
         record = {
             'funcionario_id': employee.id,
             'nombre': employee.nombre_completo.strip(),
-            'servicio': _service_name_for_employee(employee),
             'fecha_cumpleanos': next_birthday,
             'dias_restantes': days_until,
         }
         if next_birthday == today:
             record['mensaje'] = '¡Hoy está de cumpleaños!'
             today_birthdays.append(record)
-        elif 1 <= days_until <= 8:
+        elif days_until == 1:
+            tomorrow_birthdays.append(record)
+        elif 2 <= days_until <= 8:
             record['mensaje'] = f'Faltan {days_until} días.'
             upcoming_birthdays.append(record)
     today_birthdays.sort(key=lambda item: (item['nombre']))
+    tomorrow_birthdays.sort(key=lambda item: item['nombre'])
     upcoming_birthdays.sort(key=lambda item: (item['dias_restantes'], item['nombre']))
-    return today_birthdays, upcoming_birthdays
+    return today_birthdays, tomorrow_birthdays, upcoming_birthdays
 
 
 def get_upcoming_vacations(today=None):
@@ -113,16 +114,17 @@ def get_upcoming_vacations(today=None):
 
 def get_novedades_snapshot(today=None):
     today = _as_paraguay_date(today)
-    birthday_today, upcoming_birthdays = get_birthdays(today)
+    birthday_today, tomorrow_birthdays, upcoming_birthdays = get_birthdays(today)
     forthcoming_vacations = get_upcoming_vacations(today)
     return {
         'fecha_actual': today,
         'cumpleanos_hoy': birthday_today,
+        'cumpleanos_manana': tomorrow_birthdays,
         'proximos_cumpleanos': upcoming_birthdays,
         'vacaciones_proximas': forthcoming_vacations,
         'resumen': {
             'cumpleanos_hoy': len(birthday_today),
-            'proximos_cumpleanos': len(upcoming_birthdays),
+            'proximos_cumpleanos': len(tomorrow_birthdays) + len(upcoming_birthdays),
             'vacaciones_proximas': len(forthcoming_vacations),
         },
     }

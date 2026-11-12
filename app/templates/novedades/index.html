@@ -47,13 +47,7 @@
             {% if snapshot.cumpleanos_hoy %}
               {% for employee in snapshot.cumpleanos_hoy %}
                 <article class="news-card birthday-card">
-                  <div class="news-title-row">
-                    <h4>{{ employee.nombre }}</h4>
-                    <span class="badge badge-positive">Cumple años hoy</span>
-                  </div>
-                  <p><strong>Servicio:</strong> {{ employee.servicio }}</p>
-                  <p><strong>Fecha:</strong> {{ employee.fecha_cumpleanos.strftime('%d/%m') }}</p>
-                  <p class="highlight-message">{{ employee.mensaje }}</p>
+                  <h4>{{ employee.nombre }}</h4>
                 </article>
               {% endfor %}
             {% else %}
@@ -62,20 +56,28 @@
           </div>
 
           <div class="subpanel">
+            <h3><i class="bi bi-calendar2-heart" aria-hidden="true"></i> Mañana cumpleaños</h3>
+            {% if snapshot.cumpleanos_manana %}
+              {% for employee in snapshot.cumpleanos_manana %}
+                <article class="news-card birthday-card">
+                  <h4>{{ employee.nombre }}</h4>
+                </article>
+              {% endfor %}
+            {% else %}
+              <p class="empty-message">Mañana no se registran cumpleaños del personal.</p>
+            {% endif %}
+          </div>
+
+          <div class="subpanel">
             <h3><i class="bi bi-stars" aria-hidden="true"></i> Próximos cumpleaños</h3>
             {% if snapshot.proximos_cumpleanos %}
               {% for employee in snapshot.proximos_cumpleanos %}
                 <article class="news-card birthday-card">
-                  <div class="news-title-row">
-                    <h4>{{ employee.nombre }}</h4>
-                  </div>
-                  <p><strong>Servicio:</strong> {{ employee.servicio }}</p>
-                  <p><strong>Cumpleaños:</strong> {{ employee.fecha_cumpleanos.strftime('%d/%m') }}</p>
-                  <p><strong>Faltan:</strong> {{ employee.dias_restantes }} días.</p>
+                  <h4>{{ employee.nombre }}</h4>
                 </article>
               {% endfor %}
             {% else %}
-              <p class="empty-message">No se registran cumpleaños para los próximos 8 días.</p>
+              <p class="empty-message">No se registran otros cumpleaños dentro de los próximos 8 días.</p>
             {% endif %}
           </div>
         </section>
