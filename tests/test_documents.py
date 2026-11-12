@@ -21,6 +21,7 @@ from werkzeug.datastructures import FileStorage
 from test_users_rbac import accounts, client_for, PATHS
 from test_auth import login
 from test_administration import JUST_DATA, form_values
+from test_record_helpers import associate_employee
 
 
 def photo(fmt='PNG', color='white', name=None):
@@ -66,6 +67,7 @@ def isolated_documents(app, accounts, tmp_path):
 def test_all_forms_save_real_photos_atomically(app, accounts, path, data, model, key, role):
     client = client_for(app, accounts, role)
     data = fields(client, path, data)
+    data = associate_employee(app, data, model, key, accounts[0][role][0])
     photos = [photo('PNG', 'white'), photo('JPEG', 'blue'), photo('WEBP', 'red')]
     response = upload(client, path, data, photos)
     assert response.status_code == 303, response.text
@@ -348,6 +350,8 @@ def test_conciliation_keeps_retained_objects_and_removes_only_old_orphans(app, a
 
 def test_backup_copies_originals_views_and_retired_documents(app, accounts, tmp_path):
     import json
+    from pathlib import Path
+    from types import SimpleNamespace
     from scripts.respaldar_documentos import main
     client = client_for(app, accounts, 'SUPERADMIN'); rid = create_just(client, [photo(), photo('PNG','red')])
     with app.app_context():
@@ -355,7 +359,14 @@ def test_backup_copies_originals_views_and_retired_documents(app, accounts, tmp_
     retire = f'/documentos/justificativos/{rid}/{did}/retirar'
     assert client.post(retire, data={**fields(client,retire),'motivo':'Copia sustituida'}).status_code == 303
     destination = tmp_path / 'backup'
-    with patch('scripts.respaldar_documentos.create_app',return_value=app):
+    def fake_run(arguments, **kwargs):
+        if arguments[0] == 'pg_dump':
+            dump = Path(arguments[arguments.index('--file') + 1])
+            dump.write_bytes(b'fake PostgreSQL backup for test')
+        return SimpleNamespace(returncode=0)
+    with patch('scripts.respaldar_documentos.create_app',return_value=app), \
+            patch.dict('os.environ', {'PG_DUMP': 'pg_dump'}), \
+            patch('scripts.respaldar_documentos.subprocess.run', side_effect=fake_run):
         main(destination)
     folder = next(destination.iterdir())
     manifest = json.loads((folder/'manifest.json').read_text(encoding='utf-8'))

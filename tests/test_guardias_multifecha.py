@@ -14,6 +14,7 @@ from app.models.administration import CambioGuardia, DetalleCambioGuardia, Justi
 from app.administration.guardia_records import create_guardia
 from app.services import initialize_admin
 from test_auth import login
+from test_record_helpers import associate_employee
 
 NORMAL = '/reposo/cambio-guardia/'
 PAGADA = '/reposo/cambio-guardia-pagada/'
@@ -63,7 +64,10 @@ def form_data(client, path, names=NAMES, details=None):
 
 @pytest.mark.parametrize('path', [NORMAL, PAGADA])
 def test_different_dates_times_codes_and_navigation(app, admin, path):
-    response = admin.post(path, data=form_data(admin, path), follow_redirects=True)
+    values = form_data(admin, path)
+    values = associate_employee(app, values, CambioGuardia,
+        'pagadas' if path == PAGADA else 'guardias')
+    response = admin.post(path, data=values, follow_redirects=True)
     assert response.status_code == 200
     assert '04/10/2026' in response.text and '05/10/2026' in response.text
     assert '18:00 a 06:00' in response.text and '06:00 a 12:00' in response.text
@@ -111,7 +115,10 @@ def test_add_many_dates_above_old_request_limit(app, admin):
 
 @pytest.mark.parametrize('path', [NORMAL, PAGADA])
 def test_edit_add_dates_preserve_ids_creator_and_legacy_fields(app, admin, path):
-    admin.post(path, data=form_data(admin, path))
+    values = form_data(admin, path)
+    values = associate_employee(app, values, CambioGuardia,
+        'pagadas' if path == PAGADA else 'guardias')
+    admin.post(path, data=values)
     with app.app_context():
         row = db.session.scalar(db.select(CambioGuardia))
         rid, creator, creation = row.id, row.usuario_registro_id, row.fecha_creacion
@@ -122,6 +129,8 @@ def test_edit_add_dates_preserve_ids_creator_and_legacy_fields(app, admin, path)
     details.append(dict(DETAILS[0], fecha_guardia='17/10/2026', codigo='R'))
     edit_url = f'{path}{rid}/editar'
     data = form_data(admin, edit_url, names={**NAMES, 'solicitante': 'Gloria Corregida'}, details=details)
+    data = associate_employee(app, data, CambioGuardia,
+        'pagadas' if path == PAGADA else 'guardias')
     assert admin.post(edit_url, data=data).status_code == 303
     assert admin.post(edit_url, data=data).status_code == 409
     with app.app_context():

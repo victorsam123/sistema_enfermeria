@@ -101,9 +101,11 @@ def test_independent_limits_and_both_participants(app, admin, people):
     assert submit(admin, people, details('17/10/2026', '16/10/2026'),
         first=2, second=1, confirmed_advance=True).status_code == 303
     assert submit(admin, people, path=PAID, rows=details()[:2]).status_code == 303
-    assert submit(admin, people, path=PAID, rows=details('24/10/2026')[:2]).status_code == 422
+    assert submit(admin, people, path=PAID, rows=details('24/10/2026')[:2]).status_code == 409
+    assert submit(admin, people, path=PAID, rows=details('24/10/2026')[:2], confirmed_advance=True).status_code == 303
     assert submit(admin, people, path=EMERGENCY, rows=details()[:2]).status_code == 303
-    assert submit(admin, people, path=EMERGENCY, rows=details('24/10/2026')[:2]).status_code == 422
+    assert submit(admin, people, path=EMERGENCY, rows=details('24/10/2026')[:2]).status_code == 409
+    assert submit(admin, people, path=EMERGENCY, rows=details('24/10/2026')[:2], confirmed_advance=True).status_code == 303
     with app.app_context():
         assert monthly_usage(people[0][1], people[0][0], date(2026, 10, 1)) == {'REEMPLAZO': 2, 'PAGADA': 1, 'EMERGENCIA': 1}
         assert monthly_usage(people[1][1], people[1][0], date(2026, 10, 1)) == {'REEMPLAZO': 2, 'PAGADA': 0, 'EMERGENCIA': 0}
@@ -157,7 +159,7 @@ def test_api_csrf_ticket_counts_and_month(app, admin, people):
     page = admin.get(PATH).text
     csrf = re.search(r'name="csrf_token"[^>]*value="([^"]+)"', page).group(1)
     ticket = re.search(r'data-context="([^"]+)"', page).group(1)
-    payload = dict(ticket=ticket, funcionario_id=people[0][0], fecha='31/10/2026')
+    payload = dict(ticket=ticket, funcionario_id=people[0][0], fecha='31/10/2026', tipo_cambio='REEMPLAZO')
     url = '/reposo/cambios-guardia/control-mensual'
     assert admin.post(url, json=payload).status_code == 400
     response = admin.post(url, json=payload, headers={'X-CSRFToken': csrf})
@@ -180,7 +182,7 @@ def test_delete_releases_quota_restore_rechecks(app, admin, people):
         version = db.session.get(CambioGuardia, rid).version
     assert submit(admin, people, path=PAID, rows=details('24/10/2026')[:2]).status_code == 303
     response = admin.post(f'/registros/pagadas/{rid}/restaurar', data=dict(csrf_token=csrf, version=version), follow_redirects=True)
-    assert 'límite mensual' in response.text
+    assert 'ya no tiene cupo disponible' in response.text
     with app.app_context():
         assert db.session.get(CambioGuardia, rid).eliminado
 
@@ -190,7 +192,9 @@ def test_paid_requires_employee_and_enforces_individual_limit(app, admin, people
     assert admin.post(PAID, data=form_data(admin, PAID, values, details()[:2])).status_code == 422
     values['solicitante_funcionario_id'] = str(people[0][0])
     assert admin.post(PAID, data=form_data(admin, PAID, values, details()[:2])).status_code == 303
-    assert admin.post(PAID, data=form_data(admin, PAID, values, details('24/10/2026')[:2])).status_code == 422
+    assert admin.post(PAID, data=form_data(admin, PAID, values, details('24/10/2026')[:2])).status_code == 409
+    assert admin.post(PAID, data={**form_data(admin, PAID, values, details('24/10/2026')[:2]),
+        'confirmar_cupo_anticipado': '1'}).status_code == 303
 
 
 def test_concurrent_different_submissions_cannot_exceed_limit(app, admin, people):

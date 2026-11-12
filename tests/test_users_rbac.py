@@ -21,6 +21,7 @@ from test_administration import JUST_DATA, GUARD_DATA, form_values
 from test_leave_records import VAC_DATA, COM_DATA
 from test_reposos import DATA as REST_DATA
 from test_service_files_reports import report, workbook
+from test_record_helpers import associate_employee
 
 PASSWORD = 'AccesoInicial2026!'
 NEW_PASSWORD = 'CambioSeguro2027!'
@@ -114,6 +115,7 @@ def test_all_roles_create_but_loading_roles_never_get_history(app, accounts, rol
         secret['solicitante'] = 'Secreto Anterior Funcionario'
     else:
         secret['nombres_apellidos'] = 'Secreto Anterior Funcionario'
+    secret = associate_employee(app, secret, model, key, accounts[0]['SUPERADMIN'][0])
     assert privileged.post(path, data=form_values(privileged, path, secret)).status_code == 303
     clear_limits(app)
     client = client_for(app, accounts, role)
@@ -123,6 +125,7 @@ def test_all_roles_create_but_loading_roles_never_get_history(app, accounts, rol
         assert 'id="registros"' not in page.text and 'VER REGISTROS' not in page.text
         for forbidden in ('>Editar', '>Eliminar', '>Imprimir', '/informes/', '/archivos-por-servicio/', '/usuarios/'):
             assert forbidden not in page.text
+    data = associate_employee(app, data, model, key, accounts[0][role][0])
     result = client.post(path, data=form_values(client, path, data), follow_redirects=True)
     assert result.status_code == 200
     if role in ('OPERADOR', 'SUPERVISOR'):
@@ -249,6 +252,7 @@ def test_password_policy_and_confirmation(app, accounts, bad_password, confirm):
 @pytest.mark.parametrize('path,values,model,key', PATHS)
 def test_admin_roles_edit_delete_without_physical_loss_and_superadmin_restore(app, accounts, role, path, values, model, key):
     admin = client_for(app, accounts, role)
+    values = associate_employee(app, values, model, key, accounts[0][role][0])
     assert admin.post(path, data=form_values(admin, path, values)).status_code == 303
     with app.app_context():
         record = db.session.scalar(db.select(model))
@@ -263,6 +267,7 @@ def test_admin_roles_edit_delete_without_physical_loss_and_superadmin_restore(ap
         update = form_data(admin, edit_path, names={'solicitante': 'Solicitante editado', 'reemplazante': values['reemplazante']}, details=details)
     else:
         update = form_values(admin, edit_path, {**values, 'nombres_apellidos': 'Funcionario editado autorizado'})
+    update = associate_employee(app, update, model, key, accounts[0][role][0])
     assert admin.post(edit_path, data=update).status_code == 303
     assert admin.get(f'/registros/{key}/{rid}/imprimir').status_code == 200
     assert admin.get(path + str(rid) + '/editar').status_code == 200

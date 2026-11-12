@@ -25,6 +25,7 @@ from test_administration import JUST_DATA, GUARD_DATA, form_values
 from test_reposos import DATA as REST_DATA
 from test_leave_records import VAC_DATA, COM_DATA
 from test_guardias_multifecha import form_data, NAMES, DETAILS
+from test_record_helpers import associate_employee
 
 NS = {'s': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}
 NORMAL = '/reposo/cambio-guardia/'
@@ -113,6 +114,10 @@ def test_all_new_records_require_real_active_service(app, admin, path, values):
         assert all(db.session.scalar(db.select(db.func.count()).select_from(m)) == 0
             for m in (Justificativo, Reposo, CambioGuardia, Vacacion, Comisionado))
     data = form_values(admin, path, {**values, 'servicio_id': '1'})
+    if path == '/vacaciones/':
+        data = associate_employee(app, data, Vacacion, 'vacaciones')
+    elif path == PAID:
+        data = associate_employee(app, data, CambioGuardia, 'pagadas')
     saved = admin.post(path, data=data, follow_redirects=True)
     assert saved.status_code == 200
     assert 'Registro guardado correctamente en el servicio UTI - P' in saved.text
@@ -179,14 +184,18 @@ def test_export_real_dates_overlap_independent_guardias_and_service_isolation(ap
             {**JUST_DATA, 'nombres_apellidos': name, 'fecha_inasistencia': when, 'fecha_cobertura': '', 'servicio_id': service}))
     admin.post('/reposo/', data=form_values(admin, '/reposo/', {**REST_DATA, 'fecha_desde': '28/09/2026',
         'fecha_hasta': '05/10/2026', 'diagnostico': 'Diagnóstico de prueba solapado'}))
-    admin.post('/vacaciones/', data=form_values(admin, '/vacaciones/', {**VAC_DATA,
-        'fecha_inicio': '29/09/2026', 'fecha_termino': '02/10/2026'}))
+    vacation = form_values(admin, '/vacaciones/', {**VAC_DATA,
+        'fecha_inicio': '29/09/2026', 'fecha_termino': '02/10/2026'})
+    vacation = associate_employee(app, vacation, Vacacion, 'vacaciones')
+    admin.post('/vacaciones/', data=vacation)
     admin.post('/comisionados/', data=form_values(admin, '/comisionados/', COM_DATA))
     details = [dict(DETAILS[0], fecha_guardia='30/09/2026'), dict(DETAILS[1], fecha_guardia='02/10/2026'),
         dict(DETAILS[0], fecha_guardia='08/10/2026'), dict(DETAILS[1], fecha_guardia='17/10/2026'),
         dict(DETAILS[0], fecha_guardia='01/11/2026')]
     assert admin.post(NORMAL, data=form_data(admin, NORMAL, details=details)).status_code == 303
-    assert admin.post(PAID, data=form_data(admin, PAID, names={'solicitante': 'Pagado Solicitante', 'reemplazante': 'Pagado Reemplazante'})).status_code == 303
+    paid = form_data(admin, PAID, names={'solicitante': 'Pagado Solicitante', 'reemplazante': 'Pagado Reemplazante'})
+    paid = associate_employee(app, paid, CambioGuardia, 'pagadas')
+    assert admin.post(PAID, data=paid).status_code == 303
     response = report(admin)
     z, sheets, data = workbook(response)
     all_values = [v for s in data.values() for v in s['cells'].values()]

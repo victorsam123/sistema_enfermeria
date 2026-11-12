@@ -10,6 +10,7 @@ from app.models import Usuario
 from app.models.employees import Funcionario
 from app.models.hospital_services import Servicio
 from app.models.leave_records import Vacacion
+from app.employees.employment_services import add_link
 from tests.test_auth import login
 from app.novedades.services import _birthday_whatsapp_url
 
@@ -34,7 +35,7 @@ def _create_employee(app, *, names, surname, birth_date, service, user_id, telep
         fecha_nacimiento=birth_date,
         fecha_ingreso=max(birth_date, date(2020, 1, 1)),
         telefono=telephone,
-        cantidad_vinculos=1,
+        cantidad_vinculos=0,
         direccion_actual='Calle principal 123',
         servicio_id=service.id,
         usuario_registro_id=user_id,
@@ -76,6 +77,9 @@ def test_novedades_page_for_admin_and_permissions(app, client):
         employee_upcoming = _create_employee(app, names='Juan', surname='Pérez', birth_date=upcoming_birthday, service=service_two, user_id=jefe.id)
         employee_far = _create_employee(app, names='Elena', surname='Ramírez', birth_date=far_birthday, service=service, user_id=jefe.id)
         db.session.add_all([employee_today, employee_tomorrow, employee_upcoming, employee_far])
+        db.session.flush()
+        for employee in (employee_today, employee_tomorrow, employee_upcoming, employee_far):
+            add_link(employee.id, employee.fecha_ingreso, jefe.id, uuid4())
         db.session.commit()
 
         holiday = Vacacion(

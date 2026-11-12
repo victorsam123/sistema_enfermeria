@@ -118,8 +118,9 @@ def test_office_timeout_returns_control_and_cleans_temporary_files(app, tmp_path
     original = app.instance_path
     app.instance_path = str(tmp_path)
     try:
-        with app.app_context(), patch('app.administration.office_documents.subprocess.run',
-                side_effect=subprocess.TimeoutExpired('office', 90)) as runner:
+        with app.app_context(), patch('app.administration.office_documents.shutil.which', return_value='soffice'), \
+                patch('app.administration.office_documents.subprocess.run',
+                      side_effect=subprocess.TimeoutExpired('office', 90)) as runner:
             with pytest.raises(OfficeConversionError):
                 convert_to_pdf(b'PK-test', '.docx')
             assert runner.call_args.kwargs['stdout'] == subprocess.DEVNULL
