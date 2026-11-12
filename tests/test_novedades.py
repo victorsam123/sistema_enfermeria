@@ -128,6 +128,7 @@ def test_novedades_page_for_admin_and_permissions(app, client):
     assert 'Servicio:</strong> Neonatología' not in page.text
     assert 'Hoy no se registran cumpleaños del personal' not in page.text
 
-    assert login(client, 'operador_test', 'clave-operador-test').status_code == 302
-    assert 'Acceso directo a Novedades' not in client.get('/').text
-    assert client.get('/novedades/').status_code == 403
+    operator = app.test_client()
+    assert login(operator, 'operador_test', 'clave-operador-test').status_code == 302
+    assert 'Acceso directo a Novedades' not in operator.get('/').text
+    assert operator.get('/novedades/').status_code == 403
