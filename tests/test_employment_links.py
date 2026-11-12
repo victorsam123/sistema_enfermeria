@@ -247,7 +247,8 @@ def test_expedient_reuses_only_explicitly_linked_records_and_documents(app,accou
     else:payload.update(nombres_apellidos='Ana María López Benítez',funcionario_id=str(rid))
     payload=associate_employee(app,payload,model,key,accounts[0]['SUPERADMIN'][0],rid)
     assert upload(admin,path,payload,[photo()]).status_code==303
-    assert upload(admin,path,fields(admin,path,data),[]).status_code==303  # No se asocia por el nombre.
+    unlinked = upload(admin,path,fields(admin,path,data),[])
+    assert unlinked.status_code == (422 if key in ('pagadas', 'vacaciones') else 303)
     response=admin.get(f'/funcionarios/{rid}/expediente/{key}')
     assert response.status_code==200 and '1 registros asociados' in response.text
     assert 'VER DOCUMENTOS ADJUNTOS' in response.text and '1 fotografía' in response.text

@@ -12,6 +12,7 @@ from app.models import Usuario
 from app.models.administration import Justificativo, CambioGuardia, DetalleCambioGuardia
 from app.administration.services import create_record
 from test_auth import login
+from test_record_helpers import associate_employee
 
 JUST = '/justificativos/'
 NORMAL = '/reposo/cambio-guardia/'
@@ -148,7 +149,9 @@ def test_repeated_submission_and_legitimate_identical_record(app, admin):
 def test_normal_paid_are_separate_and_support_overnight(app, admin):
     assert admin.post(NORMAL, data=form_values(admin, NORMAL, {**GUARD_DATA, 'tipo_cambio': 'PAGADA'})).status_code == 303
     paid_data = {**GUARD_DATA, 'solicitante': 'Solicitante Pagado', 'reemplazante': 'Reemplazante Pagado'}
-    assert admin.post(PAGADA, data=form_values(admin, PAGADA, paid_data)).status_code == 303
+    paid_data = form_values(admin, PAGADA, paid_data)
+    paid_data = associate_employee(app, paid_data, CambioGuardia, 'pagadas')
+    assert admin.post(PAGADA, data=paid_data).status_code == 303
     normal, paid = admin.get(NORMAL), admin.get(PAGADA)
     assert 'Ana María López' in normal.text and 'Solicitante Pagado' not in normal.text
     assert 'Solicitante Pagado' in paid.text and 'Ana María López' not in paid.text

@@ -269,7 +269,11 @@ def test_admin_roles_edit_delete_without_physical_loss_and_superadmin_restore(ap
         update = form_values(admin, edit_path, {**values, 'nombres_apellidos': 'Funcionario editado autorizado'})
     update = associate_employee(app, update, model, key, accounts[0][role][0])
     assert admin.post(edit_path, data=update).status_code == 303
-    assert admin.get(f'/registros/{key}/{rid}/imprimir').status_code == 200
+    printed = admin.get(f'/registros/{key}/{rid}/imprimir')
+    if model is Vacacion:
+        assert printed.status_code == 303 and printed.location.startswith('/vacaciones/planilla?')
+    else:
+        assert printed.status_code == 200
     assert admin.get(path + str(rid) + '/editar').status_code == 200
     delete_path = f'/registros/{key}/{rid}/eliminar'
     fields = form_fields(admin, delete_path)

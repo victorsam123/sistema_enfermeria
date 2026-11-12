@@ -128,7 +128,8 @@ def test_edit_add_dates_preserve_ids_creator_and_legacy_fields(app, admin, path)
     details[0]['fecha_guardia'] = '08/10/2026'
     details.append(dict(DETAILS[0], fecha_guardia='17/10/2026', codigo='R'))
     edit_url = f'{path}{rid}/editar'
-    data = form_data(admin, edit_url, names={**NAMES, 'solicitante': 'Gloria Corregida'}, details=details)
+    edited_name = 'Gloria Corregida' if path == NORMAL else NAMES['solicitante']
+    data = form_data(admin, edit_url, names={**NAMES, 'solicitante': edited_name}, details=details)
     data = associate_employee(app, data, CambioGuardia,
         'pagadas' if path == PAGADA else 'guardias')
     assert admin.post(edit_url, data=data).status_code == 303
@@ -139,7 +140,7 @@ def test_edit_add_dates_preserve_ids_creator_and_legacy_fields(app, admin, path)
         assert (row.fecha_cambio, row.hora_inicio, row.hora_fin) == legacy
         assert row.usuario_registro_id == creator and row.fecha_creacion == creation
         assert row.usuario_modificacion_id == creator and row.version == 2
-        assert all(d.funcionario == 'Gloria Corregida' for d in row.detalles if d.participante == 'S')
+        assert all(d.funcionario == edited_name for d in row.detalles if d.participante == 'S')
 
 
 def test_edit_rejects_foreign_or_missing_detail_ids(app, admin):

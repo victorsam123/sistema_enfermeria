@@ -37,7 +37,7 @@ Railway proporciona `PORT`; Gunicorn escucha en `0.0.0.0` y ese puerto. El arran
 5. En Settings del servicio configura Healthcheck Path `/health` y timeout 300 segundos. Devuelve 200 cuando PostgreSQL responde y 503 si no está disponible, sin mostrar datos ni credenciales.
 6. Despliega y accede por HTTPS. Inicia sesión con `victor` y la contraseña privada configurada. Retira `INITIAL_ADMIN_PASSWORD` después de la primera inicialización. Reinicia y verifica que los registros y una fotografía de prueba autorizada persistan.
 
-El contenedor usa Python 3.13 y `postgresql-client`, que proporciona `pg_dump` y `pg_restore` para respaldar y verificar las migraciones históricas que lo requieren. Confirma que la versión del cliente sea compatible con la del servidor PostgreSQL. Las dependencias de Python se instalan desde `requirements.txt`; el lock existente corresponde a la instalación Windows. Para trasladar una base histórica, respáldala y verifica su restauración con herramientas compatibles antes de migrarla o moverla.
+El contenedor usa Python 3.13 y el cliente de PostgreSQL 18 (`pg_dump` y `pg_restore`) para respaldar y verificar las migraciones históricas que lo requieren. El cliente debe ser de la misma versión principal que el servidor o una posterior. Las dependencias de Python se instalan desde `requirements.txt`; el lock existente corresponde a la instalación Windows. Para trasladar una base histórica, respáldala y verifica su restauración con herramientas compatibles antes de migrarla o moverla.
 
 ## Trasladar la instalación local existente
 

@@ -105,7 +105,7 @@ def test_novedades_page_for_admin_and_permissions(app, client):
     assert 'Acceso directo a Novedades' in dashboard.text
     assert 'href="/novedades/"' in dashboard.text
     assert 'NOVEDADES DEL DEPARTAMENTO DE ENFERMERÍA' in page.text
-    assert 'Cumpleaños del personal' in page.text
+    assert 'CUMPLEAÑOS DEL PERSONAL' in page.text
     assert 'María' in page.text
     assert 'https://wa.me/595981234567?text=' in page.text
     assert 'Enviar felicitación' in page.text
