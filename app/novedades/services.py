@@ -42,14 +42,15 @@ def _service_name_for_vacation(vacacion):
     return 'Servicio no informado'
 
 
-def get_birthdays(today=None):
+def get_birthdays(today=None, include_photos=False):
     today = _as_paraguay_date(today)
     today_birthdays = []
     tomorrow_birthdays = []
     upcoming_birthdays = []
     seen_employee_ids = set()
     employees = db.session.scalars(
-        db.select(Funcionario).order_by(Funcionario.apellidos, Funcionario.nombres)
+        db.select(Funcionario).options(selectinload(Funcionario.servicio))
+        .order_by(Funcionario.apellidos, Funcionario.nombres)
     ).all()
     for employee in employees:
         if employee.id in seen_employee_ids:
@@ -60,10 +61,13 @@ def get_birthdays(today=None):
         record = {
             'funcionario_id': employee.id,
             'nombre': employee.nombre_completo.strip(),
+            'servicio': employee.servicio.nombre if employee.servicio else 'Servicio no informado',
             'fecha_cumpleanos': next_birthday,
             'dias_restantes': days_until,
             'whatsapp_url': _birthday_whatsapp_url(employee),
         }
+        if include_photos:
+            record['foto_disponible'] = bool(employee.foto_ruta)
         if next_birthday == today:
             record['mensaje'] = '¡Hoy está de cumpleaños!'
             today_birthdays.append(record)
@@ -94,7 +98,7 @@ def _birthday_whatsapp_url(employee):
     return f'https://wa.me/{phone}?text={quote(message, safe="")}'
 
 
-def get_upcoming_vacations(today=None):
+def get_upcoming_vacations(today=None, include_photos=False):
     today = _as_paraguay_date(today)
     window_end = today + timedelta(days=15)
     records = db.session.scalars(
@@ -117,7 +121,7 @@ def get_upcoming_vacations(today=None):
             mensaje = f'Vacaciones próximas: faltan {days_until} días'
         else:
             mensaje = f'Próximas vacaciones: faltan {days_until} días'
-        result.append({
+        record = {
             'funcionario_id': vacacion.funcionario_id,
             'nombre': nombre,
             'servicio': _service_name_for_vacation(vacacion),
@@ -126,14 +130,17 @@ def get_upcoming_vacations(today=None):
             'total_dias': vacacion.total_dias,
             'dias_restantes': days_until,
             'mensaje': mensaje,
-        })
+        }
+        if include_photos:
+            record['foto_disponible'] = bool(vacacion.funcionario and vacacion.funcionario.foto_ruta)
+        result.append(record)
     return result
 
 
-def get_novedades_snapshot(today=None):
+def get_novedades_snapshot(today=None, include_photos=False):
     today = _as_paraguay_date(today)
-    birthday_today, tomorrow_birthdays, upcoming_birthdays = get_birthdays(today)
-    forthcoming_vacations = get_upcoming_vacations(today)
+    birthday_today, tomorrow_birthdays, upcoming_birthdays = get_birthdays(today, include_photos)
+    forthcoming_vacations = get_upcoming_vacations(today, include_photos)
     return {
         'fecha_actual': today,
         'cumpleanos_hoy': birthday_today,

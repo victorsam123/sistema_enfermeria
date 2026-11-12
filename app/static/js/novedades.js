@@ -5,6 +5,17 @@
   const refreshUrl = page.dataset.refreshUrl;
   const refreshDelayMs = 60000;
 
+  page.addEventListener('error', (event) => {
+    const image = event.target;
+    if (!(image instanceof HTMLImageElement) || !image.matches('.news-avatar img')) return;
+
+    const fallback = document.createElement('span');
+    fallback.className = 'news-avatar news-avatar-fallback';
+    fallback.setAttribute('aria-hidden', 'true');
+    fallback.innerHTML = '<i class="bi bi-person"></i>';
+    image.parentElement.replaceWith(fallback);
+  }, true);
+
   const refreshPage = async () => {
     try {
       const response = await fetch(refreshUrl, {

@@ -1,16 +1,49 @@
 {% extends 'base.html' %}
 {% block title %}Novedades del Departamento de Enfermería{% endblock %}
+{% block extra_head %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/novedades.css') }}">
+{% endblock %}
 {% block body %}
+{% macro employee_avatar(employee) -%}
+  {% if can('employees.read') and employee.funcionario_id and employee.foto_disponible %}
+    <span class="news-avatar">
+      <img src="{{ url_for('employees.photo', record_id=employee.funcionario_id) }}"
+           alt="Fotografía de {{ employee.nombre }}" width="48" height="48" loading="lazy">
+    </span>
+  {% else %}
+    <span class="news-avatar news-avatar-fallback" aria-hidden="true"><i class="bi bi-person"></i></span>
+  {% endif %}
+{%- endmacro %}
+
 {% macro birthday_card(employee) -%}
-  <article class="news-card birthday-card">
-    <h4>{{ employee.nombre }}</h4>
+  <article class="news-card birthday-card {{ 'birthday-card-today' if employee.dias_restantes == 0 else '' }}">
+    <div class="employee-card-heading">
+      {{ employee_avatar(employee) }}
+      <div class="employee-card-identity">
+        <h3>{{ employee.nombre }}</h3>
+        <p class="employee-service">{{ employee.servicio }}</p>
+      </div>
+      {% if employee.dias_restantes == 0 %}
+        <span class="news-status status-today"><i class="bi bi-stars" aria-hidden="true"></i> Hoy</span>
+      {% elif employee.dias_restantes == 1 %}
+        <span class="news-status status-upcoming">Mañana</span>
+      {% else %}
+        <span class="news-status status-upcoming">{{ employee.dias_restantes }} días</span>
+      {% endif %}
+    </div>
+    <div class="birthday-card-details">
+      <p><span>Fecha</span><strong>{{ employee.fecha_cumpleanos.strftime('%d/%m') }}</strong></p>
+      <p><span>Estado</span><strong>
+        {% if employee.dias_restantes == 0 %}Cumple años hoy
+        {% elif employee.dias_restantes == 1 %}Mañana cumpleaños
+        {% else %}Faltan {{ employee.dias_restantes }} días{% endif %}
+      </strong></p>
+    </div>
     {% if employee.whatsapp_url %}
       <a class="birthday-whatsapp" href="{{ employee.whatsapp_url }}" target="_blank" rel="noopener noreferrer"
          aria-label="Enviar felicitación por WhatsApp a {{ employee.nombre }}">
         <i class="bi bi-whatsapp" aria-hidden="true"></i> Enviar felicitación
       </a>
-    {% else %}
-      <span class="birthday-phone-hint">Registra su teléfono en la ficha para habilitar WhatsApp.</span>
     {% endif %}
   </article>
 {%- endmacro %}
@@ -18,301 +51,120 @@
   {% include 'includes/sidebar.html' %}
   <div class="workspace">
     {% include 'includes/header.html' %}
-    <main class="dashboard-content">
+    <main class="dashboard-content novedades-content">
       <div class="breadcrumb-line"><span>Espacio administrativo</span><i class="bi bi-chevron-right" aria-hidden="true"></i><strong>Novedades</strong></div>
-      {% include 'includes/clock.html' %}
-      <div class="page-heading">
-        <div>
-          <p class="eyebrow">PANEL ADMINISTRATIVO</p>
-          <h1>NOVEDADES DEL DEPARTAMENTO DE ENFERMERÍA</h1>
-          <p>Cumpleaños y próximas vacaciones del personal.</p>
+      <section class="news-intro" aria-labelledby="news-title">
+        <div class="news-intro-copy">
+          <p class="eyebrow">DEPARTAMENTO DE ENFERMERÍA</p>
+          <h1 id="news-title">NOVEDADES DEL DEPARTAMENTO DE ENFERMERÍA</h1>
+          <p class="news-hospital">Hospital Regional Ciudad del Este</p>
+          <p class="news-description">Seguimiento de cumpleaños y próximas vacaciones del personal.</p>
         </div>
-        <a class="btn btn-secondary" href="{{ url_for('main.dashboard') }}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Volver al panel principal</a>
-      </div>
+        <div class="news-intro-tools">
+          {% include 'includes/clock.html' %}
+          <a class="btn btn-secondary news-back-link" href="{{ url_for('main.dashboard') }}">
+            <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver al panel principal
+          </a>
+        </div>
+      </section>
 
       <div class="novedades-summary" aria-label="Indicadores resumidos de novedades">
-        <article class="summary-card">
-          <span class="summary-label">Cumpleaños hoy</span>
-          <strong>{{ snapshot.resumen.cumpleanos_hoy }}</strong>
+        <article class="summary-card summary-birthday-today">
+          <span class="summary-icon" aria-hidden="true"><i class="bi bi-gift"></i></span>
+          <div><span class="summary-label">Cumpleaños de hoy</span><strong>{{ snapshot.resumen.cumpleanos_hoy }}</strong></div>
         </article>
-        <article class="summary-card">
-          <span class="summary-label">Próximos cumpleaños</span>
-          <strong>{{ snapshot.resumen.proximos_cumpleanos }}</strong>
+        <article class="summary-card summary-birthday-upcoming">
+          <span class="summary-icon" aria-hidden="true"><i class="bi bi-calendar2-heart"></i></span>
+          <div><span class="summary-label">Próximos cumpleaños · 8 días</span><strong>{{ snapshot.resumen.proximos_cumpleanos }}</strong></div>
         </article>
-        <article class="summary-card">
-          <span class="summary-label">Próximas vacaciones</span>
-          <strong>{{ snapshot.resumen.vacaciones_proximas }}</strong>
+        <article class="summary-card summary-vacations">
+          <span class="summary-icon" aria-hidden="true"><i class="bi bi-suitcase2"></i></span>
+          <div><span class="summary-label">Próximas vacaciones · 15 días</span><strong>{{ snapshot.resumen.vacaciones_proximas }}</strong></div>
         </article>
       </div>
 
-      <div class="novedades-grid">
-        <section class="novedades-panel" aria-labelledby="birthdays-title">
-          <div class="panel-header">
-            <span class="panel-icon"><i class="bi bi-calendar-event" aria-hidden="true"></i></span>
-            <div>
-              <p class="eyebrow">CUMPLEAÑOS</p>
-              <h2 id="birthdays-title">CUMPLEAÑOS DEL PERSONAL</h2>
+      <div class="birthdays-grid">
+        <section class="novedades-panel birthday-panel" aria-labelledby="birthdays-today-title">
+          <div class="panel-heading">
+            <span class="panel-icon panel-icon-gold" aria-hidden="true"><i class="bi bi-gift"></i></span>
+            <div><p class="eyebrow">CELEBRACIÓN</p><h2 id="birthdays-today-title">CUMPLEAÑOS DE HOY</h2></div>
+          </div>
+          {% if snapshot.cumpleanos_hoy %}
+            <div class="news-card-grid">
+              {% for employee in snapshot.cumpleanos_hoy %}{{ birthday_card(employee) }}{% endfor %}
             </div>
-          </div>
-
-          <div class="subpanel">
-            <h3><i class="bi bi-gift-fill" aria-hidden="true"></i> Cumpleaños de hoy</h3>
-            {% if snapshot.cumpleanos_hoy %}
-              {% for employee in snapshot.cumpleanos_hoy %}
-                {{ birthday_card(employee) }}
-              {% endfor %}
-            {% else %}
-              <p class="empty-message">Hoy no se registran cumpleaños del personal.</p>
-            {% endif %}
-          </div>
-
-          <div class="subpanel">
-            <h3><i class="bi bi-calendar2-heart" aria-hidden="true"></i> Mañana cumpleaños</h3>
-            {% if snapshot.cumpleanos_manana %}
-              {% for employee in snapshot.cumpleanos_manana %}
-                {{ birthday_card(employee) }}
-              {% endfor %}
-            {% else %}
-              <p class="empty-message">Mañana no se registran cumpleaños del personal.</p>
-            {% endif %}
-          </div>
-
-          <div class="subpanel">
-            <h3><i class="bi bi-stars" aria-hidden="true"></i> Próximos cumpleaños</h3>
-            {% if snapshot.proximos_cumpleanos %}
-              {% for employee in snapshot.proximos_cumpleanos %}
-                {{ birthday_card(employee) }}
-              {% endfor %}
-            {% else %}
-              <p class="empty-message">No se registran otros cumpleaños dentro de los próximos 8 días.</p>
-            {% endif %}
-          </div>
+          {% else %}
+            <div class="empty-message"><i class="bi bi-calendar2-check" aria-hidden="true"></i><p>Hoy no se registran cumpleaños del personal.</p></div>
+          {% endif %}
         </section>
 
-        <section class="novedades-panel" aria-labelledby="vacations-title">
-          <div class="panel-header">
-            <span class="panel-icon"><i class="bi bi-calendar2-check" aria-hidden="true"></i></span>
-            <div>
-              <p class="eyebrow">VACACIONES</p>
-              <h2 id="vacations-title">FUNCIONARIOS PRÓXIMOS A SALIR DE VACACIONES</h2>
-            </div>
+        <section class="novedades-panel birthday-panel" aria-labelledby="birthdays-upcoming-title">
+          <div class="panel-heading">
+            <span class="panel-icon" aria-hidden="true"><i class="bi bi-calendar2-heart"></i></span>
+            <div><p class="eyebrow">PRÓXIMOS 8 DÍAS</p><h2 id="birthdays-upcoming-title">PRÓXIMOS CUMPLEAÑOS – 8 DÍAS</h2></div>
           </div>
-
-          {% if snapshot.vacaciones_proximas %}
-            {% for vacation in snapshot.vacaciones_proximas %}
-              <article class="news-card vacation-card">
-                <div class="news-title-row">
-                  <h4>{{ vacation.nombre }}</h4>
-                  <span class="badge badge-warning">{{ vacation.mensaje }}</span>
-                </div>
-                <p><strong>Servicio:</strong> {{ vacation.servicio }}</p>
-                <p><strong>Inicio:</strong> {{ vacation.fecha_inicio.strftime('%d/%m/%Y') }}</p>
-                <p><strong>Término:</strong> {{ vacation.fecha_termino.strftime('%d/%m/%Y') }}</p>
-                <p><strong>Total de días:</strong> {{ vacation.total_dias }}</p>
-                <p><strong>Días restantes:</strong> {{ vacation.dias_restantes }}</p>
-              </article>
-            {% endfor %}
+          {% set upcoming_birthdays = (snapshot.cumpleanos_manana + snapshot.proximos_cumpleanos)|sort(attribute='dias_restantes') %}
+          {% if upcoming_birthdays %}
+            <div class="news-card-grid">
+              {% for employee in upcoming_birthdays %}{{ birthday_card(employee) }}{% endfor %}
+            </div>
           {% else %}
-            <p class="empty-message">No se registran vacaciones que comiencen durante los próximos 15 días.</p>
+            <div class="empty-message"><i class="bi bi-calendar2-check" aria-hidden="true"></i><p>No se registran cumpleaños en los próximos 8 días.</p></div>
           {% endif %}
         </section>
       </div>
+
+      <section class="novedades-panel vacations-panel" aria-labelledby="vacations-title">
+        <div class="panel-heading">
+          <span class="panel-icon" aria-hidden="true"><i class="bi bi-suitcase2"></i></span>
+          <div><p class="eyebrow">PLANIFICACIÓN DEL PERSONAL</p><h2 id="vacations-title">PRÓXIMAS VACACIONES – 15 DÍAS</h2></div>
+        </div>
+        {% if snapshot.vacaciones_proximas %}
+          <div class="vacations-grid">
+            {% for vacation in snapshot.vacaciones_proximas %}
+              <article class="news-card vacation-card {{ 'vacation-card-today' if vacation.dias_restantes == 0 else '' }}">
+                <div class="employee-card-heading">
+                  {% if can('employees.read') and vacation.funcionario_id and vacation.foto_disponible %}
+                    <span class="news-avatar">
+                      <img src="{{ url_for('employees.photo', record_id=vacation.funcionario_id) }}"
+                           alt="Fotografía de {{ vacation.nombre }}" width="48" height="48" loading="lazy">
+                    </span>
+                  {% else %}
+                    <span class="news-avatar news-avatar-fallback" aria-hidden="true"><i class="bi bi-person"></i></span>
+                  {% endif %}
+                  <div class="employee-card-identity">
+                    <h3>{{ vacation.nombre }}</h3>
+                    <p class="employee-service">{{ vacation.servicio }}</p>
+                  </div>
+                  {% if vacation.dias_restantes == 0 %}
+                    <span class="news-status status-today">Inicia hoy</span>
+                  {% elif vacation.dias_restantes <= 7 %}
+                    <span class="news-status status-soon">{{ vacation.dias_restantes }} días</span>
+                  {% else %}
+                    <span class="news-status status-upcoming">{{ vacation.dias_restantes }} días</span>
+                  {% endif %}
+                </div>
+                <div class="vacation-dates">
+                  <p><span>Fecha de inicio</span><strong>{{ vacation.fecha_inicio.strftime('%d/%m/%Y') }}</strong></p>
+                  <p><span>Fecha de término</span><strong>{{ vacation.fecha_termino.strftime('%d/%m/%Y') }}</strong></p>
+                </div>
+                <div class="vacation-footer">
+                  <p><span>Total de días</span><strong>{{ vacation.total_dias }}</strong></p>
+                  <p><span>Días restantes</span><strong>
+                    {% if vacation.dias_restantes == 0 %}INICIA SUS VACACIONES HOY
+                    {% else %}{{ vacation.dias_restantes }}{% endif %}
+                  </strong></p>
+                </div>
+              </article>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-message"><i class="bi bi-calendar2-check" aria-hidden="true"></i><p>No se registran vacaciones que comiencen durante los próximos 15 días.</p></div>
+        {% endif %}
+      </section>
     </main>
   </div>
 </div>
 
-<style>
-  .novedades-summary {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 1rem;
-    margin: 1rem 0 1.5rem;
-  }
-
-  .summary-card {
-    background: linear-gradient(135deg, #101b2a, #18293f);
-    border: 1px solid rgba(94, 161, 255, 0.28);
-    border-radius: 18px;
-    padding: 1.2rem 1.4rem;
-    box-shadow: 0 12px 30px rgba(8, 17, 31, 0.25);
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-  }
-
-  .summary-card .summary-label {
-    color: #9bb7d6;
-    font-size: 0.78rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-  }
-
-  .summary-card strong {
-    color: #edf5ff;
-    font-size: clamp(1.8rem, 2.3vw, 2.4rem);
-  }
-
-  .novedades-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1.5rem;
-    align-items: start;
-  }
-
-  .novedades-panel {
-    background: rgba(12, 18, 29, 0.9);
-    border: 1px solid rgba(137, 180, 255, 0.18);
-    border-radius: 20px;
-    padding: 1.2rem;
-    box-shadow: 0 16px 30px rgba(6, 11, 17, 0.2);
-  }
-
-  .panel-header {
-    display: flex;
-    align-items: center;
-    gap: 0.9rem;
-    margin-bottom: 1rem;
-    padding-bottom: 0.8rem;
-    border-bottom: 1px solid rgba(146, 184, 255, 0.14);
-  }
-
-  .panel-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 14px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(80, 144, 255, 0.14);
-    color: #8dc9ff;
-    font-size: 1.5rem;
-  }
-
-  .panel-header h2 {
-    margin: 0.18rem 0 0;
-    font-size: clamp(1.1rem, 1.5vw, 1.55rem);
-    color: #edf4ff;
-  }
-
-  .subpanel {
-    margin-bottom: 1.2rem;
-  }
-
-  .subpanel h3 {
-    color: #dfeeff;
-    font-size: 1rem;
-    margin-bottom: 0.75rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .news-card {
-    border: 1px solid rgba(129, 175, 255, 0.16);
-    border-radius: 14px;
-    background: rgba(17, 28, 42, 0.9);
-    padding: 0.9rem 1rem;
-    margin-bottom: 0.8rem;
-  }
-
-  .birthday-card {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-  }
-
-  .birthday-card h4 {
-    margin: 0;
-    color: #f3f8ff;
-    font-size: 1.05rem;
-  }
-
-  .birthday-whatsapp {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.55rem 0.8rem;
-    border-radius: 999px;
-    background: #128c4a;
-    color: #fff;
-    font-weight: 700;
-    text-decoration: none;
-  }
-
-  .birthday-whatsapp:hover,
-  .birthday-whatsapp:focus-visible {
-    background: #0c713b;
-    color: #fff;
-  }
-
-  .birthday-phone-hint {
-    color: #b7c8dc;
-    font-size: 0.82rem;
-  }
-
-  .news-title-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    margin-bottom: 0.45rem;
-  }
-
-  .news-title-row h4 {
-    margin: 0;
-    font-size: 1.05rem;
-    color: #f3f8ff;
-  }
-
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 999px;
-    padding: 0.28rem 0.6rem;
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-  }
-
-  .badge-positive {
-    background: rgba(35, 196, 115, 0.15);
-    color: #76efb5;
-  }
-
-  .badge-warning {
-    background: rgba(255, 188, 88, 0.14);
-    color: #ffd281;
-  }
-
-  .news-card p {
-    margin: 0.25rem 0;
-    color: #d6e6ff;
-  }
-
-  .highlight-message {
-    color: #8ed2ff;
-    font-weight: 600;
-  }
-
-  .empty-message {
-    margin: 0;
-    padding: 0.75rem 0.9rem;
-    color: #d7e6f9;
-    background: rgba(18, 31, 48, 0.8);
-    border: 1px dashed rgba(137, 178, 255, 0.2);
-    border-radius: 12px;
-  }
-
-  @media (max-width: 900px) {
-    .novedades-summary,
-    .novedades-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-</style>
 <script src="{{ url_for('static', filename='js/novedades.js') }}" defer></script>
 {% endblock %}

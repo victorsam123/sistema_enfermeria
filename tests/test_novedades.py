@@ -105,8 +105,15 @@ def test_novedades_page_for_admin_and_permissions(app, client):
     assert 'Acceso directo a Novedades' in dashboard.text
     assert 'href="/novedades/"' in dashboard.text
     assert 'NOVEDADES DEL DEPARTAMENTO DE ENFERMERÍA' in page.text
-    assert 'CUMPLEAÑOS DEL PERSONAL' in page.text
+    assert 'Hospital Regional Ciudad del Este' in page.text
+    assert 'Seguimiento de cumpleaños y próximas vacaciones del personal.' in page.text
+    assert 'id="dashboard-date"' in page.text
+    assert 'VOLVER AL PANEL PRINCIPAL' in page.text
+    assert 'CUMPLEAÑOS DE HOY' in page.text
+    assert 'PRÓXIMOS CUMPLEAÑOS – 8 DÍAS' in page.text
+    assert 'PRÓXIMAS VACACIONES – 15 DÍAS' in page.text
     assert 'María' in page.text
+    assert 'Neonatología' in page.text
     assert 'https://wa.me/595981234567?text=' in page.text
     assert 'Enviar felicitación' in page.text
     wa_link = re.search(r'href="(https://wa\.me/[^"]+)"', page.text)
@@ -123,8 +130,13 @@ def test_novedades_page_for_admin_and_permissions(app, client):
     )
     assert 'Mañana cumpleaños' in page.text
     assert page.text.count('Ana Benítez') == 1
+    assert page.text.index('Ana Benítez') < page.text.index('Juan Pérez')
     assert 'Juan' in page.text
     assert 'Pedro Martínez' in page.text
+    assert 'status-soon' in page.text
+    assert 'Fecha de inicio' in page.text
+    assert 'Fecha de término' in page.text
+    assert 'Total de días' in page.text
     assert 'Servicio:</strong> Neonatología' not in page.text
     assert 'Hoy no se registran cumpleaños del personal' not in page.text
 
