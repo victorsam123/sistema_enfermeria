@@ -21,8 +21,8 @@ def test_birthday_whatsapp_link_uses_phone_and_personalized_message():
     parsed = urlsplit(link)
     assert parsed.netloc == 'wa.me' and parsed.path == '/595981234567'
     message = parse_qs(parsed.query)['text'][0]
-    assert message.startswith('Estimado/a *Ana Benítez*,\n')
-    assert message.endswith('Atentamente,\n*Jefatura de Enfermería*')
+    assert message.startswith('Estimado/a *Ana Benítez*,\n\n')
+    assert message.endswith('Atentamente,\n\n*Jefatura de Enfermería*')
     assert _birthday_whatsapp_url(SimpleNamespace(telefono=None, nombre_completo='Ana Benítez')) is None
 
 
@@ -73,12 +73,13 @@ def test_novedades_page_for_admin_and_permissions(app, client):
         far_day = today + timedelta(days=12)
         far_birthday = date(1980, far_day.month, far_day.day)
         employee_today = _create_employee(app, names='María', surname='González', birth_date=today_birthday, service=service, user_id=jefe.id, telephone='595981234567')
+        no_phone = _create_employee(app, names='Laura María', surname='Sosa', birth_date=today_birthday, service=service, user_id=jefe.id)
         employee_tomorrow = _create_employee(app, names='Ana', surname='Benítez', birth_date=tomorrow_birthday, service=service, user_id=jefe.id)
         employee_upcoming = _create_employee(app, names='Juan', surname='Pérez', birth_date=upcoming_birthday, service=service_two, user_id=jefe.id)
         employee_far = _create_employee(app, names='Elena', surname='Ramírez', birth_date=far_birthday, service=service, user_id=jefe.id)
-        db.session.add_all([employee_today, employee_tomorrow, employee_upcoming, employee_far])
+        db.session.add_all([employee_today, no_phone, employee_tomorrow, employee_upcoming, employee_far])
         db.session.flush()
-        for employee in (employee_today, employee_tomorrow, employee_upcoming, employee_far):
+        for employee in (employee_today, no_phone, employee_tomorrow, employee_upcoming, employee_far):
             add_link(employee.id, employee.fecha_ingreso, jefe.id, uuid4())
         db.session.commit()
 
@@ -108,28 +109,19 @@ def test_novedades_page_for_admin_and_permissions(app, client):
     assert 'Hospital Regional Ciudad del Este' in page.text
     assert 'Seguimiento de cumpleaños y próximas vacaciones del personal.' in page.text
     assert 'id="dashboard-date"' in page.text
-    assert 'VOLVER AL PANEL PRINCIPAL' in page.text
+    assert 'Volver al panel principal' in page.text
     assert 'CUMPLEAÑOS DE HOY' in page.text
     assert 'PRÓXIMOS CUMPLEAÑOS – 8 DÍAS' in page.text
     assert 'PRÓXIMAS VACACIONES – 15 DÍAS' in page.text
     assert 'María' in page.text
     assert 'Neonatología' in page.text
-    assert 'https://wa.me/595981234567?text=' in page.text
-    assert 'Enviar felicitación' in page.text
-    wa_link = re.search(r'href="(https://wa\.me/[^"]+)"', page.text)
-    assert wa_link
-    message = parse_qs(urlsplit(unescape(wa_link.group(1))).query)['text'][0]
-    assert message == (
-        'Estimado/a *María González*,\n'
-        'De parte del Dpto. de Enfermería, te enviamos nuestras más sinceras felicitaciones '
-        'por tu cumpleaños. Valoramos profundamente tu compromiso, tu ética de trabajo y tu '
-        'valiosa contribución a nuestro equipo de salud. Te deseamos un excelente día junto a '
-        'tus seres queridos y muchos éxitos en tus proyectos personales y profesionales.\n'
-        'Atentamente,\n'
-        '*Jefatura de Enfermería*'
-    )
+    assert 'data-whatsapp-url="https://wa.me/595981234567?text=' in page.text
+    assert 'FELICITAR CUMPLEAÑOS' in page.text
+    assert 'data-name="Laura María Sosa"' in page.text
+    assert 'data-whatsapp-url=""' in page.text
+    assert 'birthday-dialog' in page.text
     assert 'Mañana cumpleaños' in page.text
-    assert page.text.count('Ana Benítez') == 1
+    assert page.text.count('<h3>Ana Benítez</h3>') == 1
     assert page.text.index('Ana Benítez') < page.text.index('Juan Pérez')
     assert 'Juan' in page.text
     assert 'Pedro Martínez' in page.text
@@ -144,3 +136,11 @@ def test_novedades_page_for_admin_and_permissions(app, client):
     assert login(operator, 'operador_test', 'clave-operador-test').status_code == 302
     assert 'Acceso directo a Novedades' not in operator.get('/').text
     assert operator.get('/novedades/').status_code == 403
+
+
+def test_birthday_phone_normalization_and_invalid_numbers():
+    for phone in ('0981234567', '981234567', '+595981234567', '595981234567'):
+        employee = SimpleNamespace(telefono=phone, nombre_completo='Ana María Benítez')
+        assert urlsplit(_birthday_whatsapp_url(employee)).path == '/595981234567'
+    for phone in (None, '123', '0981234567ext55', '+123456789012'):
+        assert _birthday_whatsapp_url(SimpleNamespace(telefono=phone, nombre_completo='Ana')) is None

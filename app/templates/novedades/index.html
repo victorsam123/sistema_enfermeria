@@ -39,12 +39,10 @@
         {% else %}Faltan {{ employee.dias_restantes }} días{% endif %}
       </strong></p>
     </div>
-    {% if employee.whatsapp_url %}
-      <a class="birthday-whatsapp" href="{{ employee.whatsapp_url }}" target="_blank" rel="noopener noreferrer"
-         aria-label="Enviar felicitación por WhatsApp a {{ employee.nombre }}">
-        <i class="bi bi-whatsapp" aria-hidden="true"></i> Enviar felicitación
-      </a>
-    {% endif %}
+    <button type="button" class="birthday-whatsapp birthday-greeting" data-name="{{ employee.nombre }}"
+            data-message='{{ employee.felicitacion|tojson|forceescape }}' data-whatsapp-url="{{ employee.whatsapp_url or '' }}">
+      <i class="bi bi-gift" aria-hidden="true"></i> {{ 'FELICITAR CUMPLEAÑOS' if employee.dias_restantes == 0 else 'Preparar felicitación' }}
+    </button>
   </article>
 {%- endmacro %}
 <div class="dashboard-shell" id="novedades-page" data-refresh-url="{{ url_for('novedades.api_resumen') }}">
@@ -166,5 +164,19 @@
   </div>
 </div>
 
+<dialog id="birthday-dialog" class="birthday-dialog" aria-labelledby="birthday-dialog-title">
+  <h2 id="birthday-dialog-title">FELICITACIÓN INSTITUCIONAL</h2>
+  <p>Departamento de Enfermería – Hospital Regional Ciudad del Este</p>
+  <strong id="birthday-dialog-name"></strong>
+  <label for="birthday-message">Mensaje editable</label>
+  <textarea id="birthday-message" rows="10"></textarea>
+  <p id="birthday-no-phone" hidden>No tiene un número de WhatsApp registrado. Puede copiar la felicitación para compartirla manualmente.</p>
+  <p id="birthday-copy-status" role="status" aria-live="polite"></p>
+  <div class="birthday-dialog-actions">
+    <button type="button" id="birthday-copy">COPIAR FELICITACIÓN</button>
+    <a id="birthday-send" target="_blank" rel="noopener noreferrer" aria-disabled="true">ENVIAR POR WHATSAPP</a>
+    <button type="button" id="birthday-close">CERRAR</button>
+  </div>
+</dialog>
 <script src="{{ url_for('static', filename='js/novedades.js') }}" defer></script>
 {% endblock %}

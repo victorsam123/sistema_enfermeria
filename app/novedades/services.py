@@ -65,6 +65,7 @@ def get_birthdays(today=None, include_photos=False):
             'fecha_cumpleanos': next_birthday,
             'dias_restantes': days_until,
             'whatsapp_url': _birthday_whatsapp_url(employee),
+            'felicitacion': _birthday_message(employee.nombre_completo),
         }
         if include_photos:
             record['foto_disponible'] = bool(employee.foto_ruta)
@@ -82,20 +83,36 @@ def get_birthdays(today=None, include_photos=False):
     return today_birthdays, tomorrow_birthdays, upcoming_birthdays
 
 
-def _birthday_whatsapp_url(employee):
-    phone = ''.join(char for char in (employee.telefono or '') if char in '0123456789')
-    if not 8 <= len(phone) <= 15:
-        return None
-    message = (
-        f'Estimado/a *{employee.nombre_completo.strip()}*,\n'
+def _birthday_message(name):
+    return (
+        f'Estimado/a {name.strip()},\n\n'
         'De parte del Dpto. de Enfermería, te enviamos nuestras más sinceras felicitaciones '
         'por tu cumpleaños. Valoramos profundamente tu compromiso, tu ética de trabajo y tu '
         'valiosa contribución a nuestro equipo de salud. Te deseamos un excelente día junto a '
-        'tus seres queridos y muchos éxitos en tus proyectos personales y profesionales.\n'
-        'Atentamente,\n'
-        '*Jefatura de Enfermería*'
+        'tus seres queridos y muchos éxitos en tus proyectos personales y profesionales.\n\n'
+        'Atentamente,\n\nJefatura de Enfermería'
     )
-    return f'https://wa.me/{phone}?text={quote(message, safe="")}'
+
+
+def _birthday_whatsapp_url(employee):
+    import re
+    raw = employee.telefono or ''
+    if not re.fullmatch(r'[+0-9 ()-]+', raw) or raw.count('+') > 1 or ('+' in raw and not raw.lstrip(' (').startswith('+')):
+        return None
+    phone = ''.join(c for c in raw if c in '0123456789')
+    if phone.startswith('595'):
+        national = phone[3:]
+    elif phone.startswith('0'):
+        national = phone[1:]
+    else:
+        national = phone
+    if not re.fullmatch(r'9[0-9]{8}', national):
+        return None
+    message = _birthday_message(employee.nombre_completo)
+    message = message.replace(f'Estimado/a {employee.nombre_completo.strip()},',
+                              f'Estimado/a *{employee.nombre_completo.strip()}*,', 1)
+    message = message.removesuffix('Jefatura de Enfermería') + '*Jefatura de Enfermería*'
+    return f'https://wa.me/595{national}?text={quote(message, safe="")}'
 
 
 def get_upcoming_vacations(today=None, include_photos=False):

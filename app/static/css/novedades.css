@@ -547,3 +547,13 @@
     font-size: 0.59rem;
   }
 }
+
+.birthday-greeting { width: 100%; cursor: pointer; }
+.birthday-dialog { color: #eaf3fb; background: #14263a; border: 1px solid #46627d; border-radius: 14px; padding: 1.5rem; width: min(90vw, 650px); max-height: 90vh; overflow: auto; }
+.birthday-dialog::backdrop { background: rgba(0, 9, 20, .8); }
+.birthday-dialog h2 { color: #bce9f8; }
+.birthday-dialog label, .birthday-dialog strong { display: block; margin: .75rem 0; }
+.birthday-dialog textarea { width: 100%; box-sizing: border-box; color: #f1f6fb; background: #0c1c2b; border: 1px solid #59738a; border-radius: 8px; padding: .8rem; line-height: 1.5; resize: vertical; }
+.birthday-dialog-actions { display: flex; flex-wrap: wrap; gap: .6rem; }
+.birthday-dialog-actions button, .birthday-dialog-actions a { background: #164863; color: #fff; border: 1px solid #7bc1d8; border-radius: 6px; padding: .7rem; cursor: pointer; text-decoration: none; }
+.birthday-dialog-actions a[aria-disabled="true"] { opacity: .45; cursor: not-allowed; }
