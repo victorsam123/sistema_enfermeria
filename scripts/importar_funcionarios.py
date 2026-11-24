@@ -3,6 +3,7 @@
 Uso (desde la raíz del proyecto, con DATABASE_URL configurada):
     python -m scripts.importar_funcionarios RESPUESTAS.csv            # simulación, no escribe
     python -m scripts.importar_funcionarios RESPUESTAS.csv --aplicar  # escribe
+También acepta la URL de exportación CSV de la hoja de Google (acceso por enlace).
 
 - Cédula repetida en la hoja: se usa solo la respuesta más reciente.
 - Cédula inexistente en la base: se crea la ficha con sus vínculos laborales.
@@ -89,8 +90,14 @@ def split_name(full):
 
 
 def read_rows(path):
-    with open(path, encoding='utf-8-sig', newline='') as handle:
-        rows = list(csv.DictReader(handle))
+    if path.startswith('http'):
+        import io
+        from urllib.request import urlopen
+        with urlopen(path, timeout=60) as response:
+            rows = list(csv.DictReader(io.StringIO(response.read().decode('utf-8-sig'), newline='')))
+    else:
+        with open(path, encoding='utf-8-sig', newline='') as handle:
+            rows = list(csv.DictReader(handle))
     latest, repeated = {}, set()
     for row in rows:
         try:
